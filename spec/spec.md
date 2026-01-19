@@ -1,0 +1,215 @@
+# LingoFlow - Project Specification
+
+> **Source of Truth** - 项目规格文档总索引
+
+---
+
+## 1. 项目概览 (Project Overview)
+
+| 属性 | 说明 |
+|------|------|
+| **项目名称** | LingoFlow |
+| **核心定位** | 基于 AI 生成语境的垂直单词记忆应用 |
+| **设计理念** | AI 驱动、输出反馈学习、沉浸式记忆 |
+| **目标用户** | 英语学习者 (备考/日常学习) |
+
+---
+
+## 2. 核心架构索引 (Architecture Index)
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 📋 需求规格 | [requirement.md](./docs/requirement.md) | 模块划分、用户地图、核心逻辑闭环 |
+| 🔧 系统设计 | [design.md](./docs/design.md) | ER 图、API 定义、数据表设计 |
+| 🎨 原型预览 | [total.html](./docs/prototype/total.html) | 可点击交互原型 |
+
+---
+
+## 3. 技术栈 (Tech Stack)
+
+| 层级 | 技术选型 |
+|------|----------|
+| **前端** | Vue 3 + TypeScript + Element UI + Tailwind CSS |
+| **后端** | Spring Boot 3.x |
+| **数据库** | MySQL 8.0 + Redis |
+| **AI 服务** | 硅基流动 API |
+| **认证** | JWT (Access + Refresh Token) |
+| **部署** | 云服务器原生部署 + Nginx |
+
+---
+
+## 4. 核心功能快照 (Feature List & Status)
+
+### Phase 1: 基础设施 (Week 1) ✅
+- [x] 搭建前端项目结构 (Vue 3 + Vite)
+- [x] 搭建后端项目结构 (Spring Boot)
+- [x] 配置数据库连接 (MySQL)
+- [x] 实现用户认证 (注册/登录/JWT)
+- [x] 配置环境变量与安全规范
+
+### Phase 2: 核心学习模块 (Week 2-3) ✅
+- [x] 实现词库管理 (CRUD)
+- [x] 实现单词展示与筛选
+- [x] 实现生词本功能
+- [x] 集成硅基流动 API (文章生成)
+- [x] 实现学习会话管理
+- [x] 实现造句输入与 AI 批改
+
+### Phase 3: 复习系统 (Week 4) ✅
+- [x] 实现 SM-2 复习算法
+- [x] 实现复习队列生成
+- [x] 实现熟悉度自评功能
+- [x] 实现选择题测试流程
+- [x] 实现错误队列循环
+
+### Phase 4: 用户体验 (Week 5) ✅
+- [x] 实现统计仪表盘
+- [x] 实现周/月学习曲线图表
+- [x] 优化前端交互与动画
+- [x] 添加错误处理与 Toast 提示
+- [x] 响应式设计适配
+
+### Phase 5: 测试与部署 (Week 6)
+- [ ] 编写单元测试 (核心逻辑)
+- [ ] 编写集成测试 (API)
+- [ ] 性能优化与缓存
+- [ ] Docker 容器化
+- [ ] 部署到生产环境
+
+---
+
+## 5. 全局开发约束 (Global Constraints)
+
+### 5.1 代码规范
+- 前端: ESLint + Prettier (Vue/TS 规范)
+- 后端: Alibaba Java Coding Guidelines
+- Git: Conventional Commits
+
+### 5.2 安全规范
+| 规范 | 说明 |
+|------|------|
+| 密码存储 | bcrypt 加密 (cost=12) |
+| Token | JWT HS256, Access 1h / Refresh 7d |
+| 敏感信息 | 禁止硬编码, 使用环境变量 |
+| 日志 | 禁止记录密码、Token |
+| CORS | 配置允许的域名白名单 |
+
+### 5.3 测试要求
+- 核心业务逻辑: 单元测试覆盖
+- 所有 API: 集成测试覆盖
+- 前端: 关键组件 E2E 测试
+
+---
+
+## 6. 项目目录结构 (Project Structure)
+
+```
+lingoflow/
+├── spec/                           # 规格文档
+│   ├── docs/
+│   │   ├── requirement.md          # 需求分析
+│   │   ├── design.md               # 系统设计
+│   │   └── prototype/
+│   │       └── total.html          # UI 原型
+│   └── spec.md                     # 总索引 (当前文件)
+│
+├── frontend/                       # 前端项目
+│   ├── src/
+│   │   ├── api/                    # API 请求封装
+│   │   ├── components/             # 通用组件
+│   │   ├── layouts/                # 布局组件
+│   │   ├── views/                  # 页面视图
+│   │   ├── stores/                 # Pinia 状态管理
+│   │   ├── router/                 # 路由配置
+│   │   └── utils/                  # 工具函数
+│   ├── package.json
+│   └── vite.config.ts
+│
+├── backend/                        # 后端项目
+│   ├── src/main/java/
+│   │   └── com/lingoflow/
+│   │       ├── controller/         # API 控制器
+│   │       ├── service/            # 业务逻辑
+│   │       ├── mapper/             # MyBatis Mapper
+│   │       ├── entity/             # 实体类
+│   │       ├── dto/                # 数据传输对象
+│   │       ├── config/             # 配置类
+│   │       ├── security/           # 安全相关
+│   │       └── exception/          # 异常处理
+│   ├── src/main/resources/
+│   │   ├── application.yml
+│   │   └── db/migration/           # Flyway 迁移
+│   └── pom.xml
+│
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
+
+---
+
+## 7. 快速链接
+
+- 📋 [需求文档](./docs/requirement.md)
+- 🔧 [设计文档](./docs/design.md)  
+- 🎨 [原型预览](./docs/prototype/total.html)
+
+---
+
+## 8. 同步日志 (Sync Log)
+
+| 时间 | 方向 | 说明 |
+|------|------|------|
+| 2026-01-17 19:10 | to-spec | Phase 1 完成同步：标记基础设施任务完成，更新目录结构 (repository→mapper) |
+| 2026-01-18 16:09 | to-spec | Phase 2-3 完成同步：标记学习模块和复习系统完成，更新 review_records 表定义，添加 isFromErrorQueue 参数 |
+| 2026-01-18 18:10 | to-spec | Phase 4 完成同步：标记用户体验优化完成（统计仪表盘、周学习曲线、Premium UI/UX、MainLayout持久化导航、错误处理），添加 layouts/ 目录到项目结构，更新统计 API 定义 |
+
+---
+
+## Phase 6: 词典系统 ✅
+
+**目标**: 实现多词典支持，用户可选择四级、六级、雅思、托福等词典，独立统计进度
+
+- [x] 数据库迁移：创建 dictionaries 和 word_dictionary_tags 表 (Ref: design_extension.md#数据库扩展-词典系统)
+- [x] 后端实现：DictionaryController、DictionaryService
+  - [x] GET /api/dictionaries - 获取词典列表
+  - [x] GET /api/dictionaries/{id}/progress - 获取词典进度
+- [x] 前端实现：词典选择器组件、进度显示
+  - [x] DictionarySelector.vue - 词典选择组件
+  - [x] VocabularyView.vue 扩展 - 显示词典标签和分类进度
+- [x] 集成测试：词典切换流程验证 (Ref: requirement.md#UM-08)
+
+---
+
+## Phase 7: 学习定制与文章渲染增强 ✅
+
+**目标**: 实现学习前的个性化定制和文章阅读交互增强
+
+- [x] 数据库迁移：修改 learning_sessions 表，新增 theme、difficulty_preference、target_word_count 字段 (Ref: design_extension.md#数据库扩展-学习定制)
+- [x] 后端实现：学习会话定制参数
+  - [x] POST /api/learning/sessions 扩展 - 支持定制参数
+  - [x] POST /api/tts/speak - 文本转语音接口
+- [x] AI服务：更新文章生成提示词模板
+  - [x] 集成主题、难度、词汇数量参数到提示词
+- [x] 前端实现：
+  - [x] LearningCustomizer.vue - 学习定制参数选择器
+  - [x] ArticleReader.vue 增强 - 单词高亮、气泡、朗读、翻译折叠
+  - [x] TTSService.ts - TTS API 封装
+- [x] 集成测试：完整学习定制和阅读体验流程 (Ref: requirement.md#UM-09, UM-10)
+
+---
+
+## Phase 8: 阅读理解与造句改进 ✅
+
+**目标**: 引入阅读理解题目，优化造句题引导
+
+- [x] 数据库迁移：修改 session_words 表，新增 question_type、question_data 字段 (Ref: design_extension.md#数据库扩展-阅读理解题目)
+- [x] AI服务：生成阅读理解题目和改进的造句题
+  - [x] 生成2道词汇理解选择题
+  - [x] 生成1道文章主旨题
+  - [x] 生成造句题主题和中文例句
+- [x] 前端实现：
+  - [x] ComprehensionQuiz.vue - 阅读理解选择题组件
+  - [x] SentenceMaking.vue 改进 - 显示主题、中文例句，隐藏释义
+- [x] 集成测试：阅读理解答题和改进造句流程 (Ref: requirement.md#UM-11, UM-12)
+

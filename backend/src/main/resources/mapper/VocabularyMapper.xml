@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lingoflow.mapper.VocabularyMapper">
+    
+    <resultMap id="VocabularyResultMap" type="com.lingoflow.entity.Vocabulary">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="wordId" column="word_id"/>
+        <result property="familiarity" column="familiarity"/>
+        <result property="reviewCount" column="review_count"/>
+        <result property="easinessFactor" column="easiness_factor"/>
+        <result property="intervalDays" column="interval_days"/>
+        <result property="nextReviewDate" column="next_review_date"/>
+        <result property="lastReviewDate" column="last_review_date"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <association property="word" javaType="com.lingoflow.entity.Word">
+            <id property="id" column="w_id"/>
+            <result property="word" column="w_word"/>
+            <result property="phonetic" column="w_phonetic"/>
+            <result property="meaningCn" column="w_meaning_cn"/>
+            <result property="meaningEn" column="w_meaning_en"/>
+            <result property="exampleSentence" column="w_example_sentence"/>
+            <result property="difficulty" column="w_difficulty"/>
+        </association>
+    </resultMap>
+    
+    <select id="findById" resultMap="VocabularyResultMap">
+        SELECT v.*, 
+               w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
+               w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty
+        FROM vocabulary v
+        LEFT JOIN words w ON v.word_id = w.id
+        WHERE v.id = #{id}
+    </select>
+    
+    <select id="findByUserIdAndWordId" resultMap="VocabularyResultMap">
+        SELECT v.*, 
+               w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
+               w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty
+        FROM vocabulary v
+        LEFT JOIN words w ON v.word_id = w.id
+        WHERE v.user_id = #{userId} AND v.word_id = #{wordId}
+    </select>
+    
+    <select id="findByUserId" resultMap="VocabularyResultMap">
+        SELECT v.*, 
+               w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
+               w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty
+        FROM vocabulary v
+        LEFT JOIN words w ON v.word_id = w.id
+        WHERE v.user_id = #{userId}
+        <if test="status == 'review'">
+            AND v.next_review_date &lt;= NOW()
+        </if>
+        ORDER BY v.created_at DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <select id="findByIds" resultMap="VocabularyResultMap">
+        SELECT v.*, 
+               w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
+               w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty
+        FROM vocabulary v
+        LEFT JOIN words w ON v.word_id = w.id
+        WHERE v.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM vocabulary WHERE user_id = #{userId}
+        <if test="status == 'review'">
+            AND next_review_date &lt;= NOW()
+        </if>
+    </select>
+    
+    <select id="existsByUserIdAndWordId" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM vocabulary WHERE user_id = #{userId} AND word_id = #{wordId}
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO vocabulary (user_id, word_id, familiarity, review_count, easiness_factor, 
+                                interval_days, next_review_date, created_at, updated_at)
+        VALUES (#{userId}, #{wordId}, #{familiarity}, 0, 2.5, 1, 
+                DATE_ADD(NOW(), INTERVAL 1 DAY), NOW(), NOW())
+    </insert>
+    
+    <update id="update">
+        UPDATE vocabulary SET
+            familiarity = #{familiarity},
+            review_count = #{reviewCount},
+            easiness_factor = #{easinessFactor},
+            interval_days = #{intervalDays},
+            next_review_date = #{nextReviewDate},
+            last_review_date = #{lastReviewDate},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM vocabulary WHERE id = #{id}
+    </delete>
+    
+    <delete id="deleteByUserIdAndId">
+        DELETE FROM vocabulary WHERE user_id = #{userId} AND id = #{id}
+    </delete>
+</mapper>

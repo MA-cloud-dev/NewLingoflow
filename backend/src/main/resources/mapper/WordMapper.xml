@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lingoflow.mapper.WordMapper">
+    
+    <resultMap id="WordResultMap" type="com.lingoflow.entity.Word">
+        <id property="id" column="id"/>
+        <result property="word" column="word"/>
+        <result property="phonetic" column="phonetic"/>
+        <result property="meaningCn" column="meaning_cn"/>
+        <result property="meaningEn" column="meaning_en"/>
+        <result property="exampleSentence" column="example_sentence"/>
+        <result property="difficulty" column="difficulty"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+    
+    <select id="findById" resultMap="WordResultMap">
+        SELECT * FROM words WHERE id = #{id}
+    </select>
+    
+    <select id="findAll" resultMap="WordResultMap">
+        SELECT * FROM words ORDER BY id
+    </select>
+    
+    <select id="findByDifficulty" resultMap="WordResultMap">
+        SELECT * FROM words WHERE difficulty = #{difficulty} ORDER BY id
+    </select>
+    
+    <select id="findWordsNotInUserVocabulary" resultMap="WordResultMap">
+        SELECT w.* FROM words w
+        WHERE w.id NOT IN (
+            SELECT v.word_id FROM vocabulary v WHERE v.user_id = #{userId}
+        )
+        <if test="difficulty != null and difficulty != ''">
+            AND w.difficulty = #{difficulty}
+        </if>
+        ORDER BY RAND()
+        LIMIT #{limit}
+    </select>
+    
+    <select id="findByIds" resultMap="WordResultMap">
+        SELECT * FROM words WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO words (word, phonetic, meaning_cn, meaning_en, example_sentence, difficulty, created_at)
+        VALUES (#{word}, #{phonetic}, #{meaningCn}, #{meaningEn}, #{exampleSentence}, #{difficulty}, NOW())
+    </insert>
+    
+    <update id="update">
+        UPDATE words SET
+            word = #{word},
+            phonetic = #{phonetic},
+            meaning_cn = #{meaningCn},
+            meaning_en = #{meaningEn},
+            example_sentence = #{exampleSentence},
+            difficulty = #{difficulty}
+        WHERE id = #{id}
+    </update>
+    
+    <delete id="deleteById">
+        DELETE FROM words WHERE id = #{id}
+    </delete>
+    
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM words
+    </select>
+</mapper>

@@ -1,0 +1,61 @@
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.log
+*.tmp
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Spring Boot
+*.pid
+application-local.yml
+application-dev.yml
+
+# Node.js / npm
+node_modules/
+dist/
+.npm/
+*.tgz
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+out/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test
+coverage/
+.nyc_output/
+
+# Temporary files
+*.bak
+*.backup
+*~
+
+# Gemini agent files
+.agent/
+
+# Frontend cache
+.vite/
+.cache/

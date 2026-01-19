@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lingoflow.mapper.ReviewRecordMapper">
+    
+    <resultMap id="ReviewRecordResultMap" type="com.lingoflow.entity.ReviewRecord">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="vocabularyId" column="vocabulary_id"/>
+        <result property="rating" column="rating"/>
+        <result property="testPassed" column="test_passed"/>
+        <result property="responseTimeMs" column="response_time_ms"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+    
+    <select id="findById" resultMap="ReviewRecordResultMap">
+        SELECT * FROM review_records WHERE id = #{id}
+    </select>
+    
+    <select id="findByUserIdAndVocabularyId" resultMap="ReviewRecordResultMap">
+        SELECT * FROM review_records 
+        WHERE user_id = #{userId} AND vocabulary_id = #{vocabularyId}
+        ORDER BY created_at DESC
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO review_records (user_id, vocabulary_id, rating, test_passed, response_time_ms, created_at)
+        VALUES (#{userId}, #{vocabularyId}, #{rating}, #{testPassed}, #{responseTimeMs}, NOW())
+    </insert>
+    
+    <update id="update">
+        UPDATE review_records SET
+            rating = #{rating},
+            test_passed = #{testPassed},
+            response_time_ms = #{responseTimeMs}
+        WHERE id = #{id}
+    </update>
+</mapper>

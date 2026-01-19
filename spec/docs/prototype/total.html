@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LingoFlow - AI 驱动单词记忆</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --sky-blue: #0ea5e9;
+            --sky-blue-light: #e0f2fe;
+            --gray-light: #f8fafc;
+            --gray-border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .nav-item.active {
+            background-color: var(--sky-blue-light);
+            color: var(--sky-blue);
+            border-left: 3px solid var(--sky-blue);
+        }
+
+        /* .page classes removed, using Tailwind utilities instead */
+        .card {
+            background: white;
+            border: 1px solid var(--gray-border);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary {
+            background: var(--sky-blue);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #0284c7;
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 1px solid var(--gray-border);
+            color: #64748b;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-light);
+        }
+
+        .word-card {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #1e293b;
+            padding: 48px;
+            text-align: center;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #fef08a 0%, #fef08a 100%);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--gray-border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--sky-blue);
+            transition: width 0.3s ease;
+        }
+
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 16px;
+            border: 1px solid var(--gray-border);
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: white;
+        }
+
+        .option-btn:hover {
+            border-color: var(--sky-blue);
+            background: var(--sky-blue-light);
+        }
+
+        .option-btn.correct {
+            border-color: #22c55e;
+            background: #f0fdf4;
+            color: #15803d;
+        }
+
+        .option-btn.wrong {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen">
+    <!-- 登录页面 -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center">
+        <div class="card p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-sky-500 mb-2">LingoFlow</h1>
+                <p class="text-slate-500">AI 驱动的沉浸式单词记忆</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">用户名</label>
+                    <input type="text"
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="请输入用户名">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">密码</label>
+                    <input type="password"
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="请输入密码">
+                </div>
+                <button onclick="showPage('home')" class="btn-primary w-full">登录</button>
+                <div class="text-center text-sm text-slate-500">
+                    还没有账号？<a href="#" onclick="showPage('register'); return false;"
+                        class="text-sky-500 hover:underline">立即注册</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册页面 -->
+    <div id="register-page" class="hidden min-h-screen flex items-center justify-center">
+        <div class="card p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-sky-500 mb-2">创建账号</h1>
+                <p class="text-slate-500">开始你的单词记忆之旅</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">用户名</label>
+                    <input type="text"
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="请输入用户名">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">邮箱</label>
+                    <input type="email"
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="请输入邮箱">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">密码</label>
+                    <input type="password"
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="请输入密码">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">确认密码</label>
+                    <input type="password"
+                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        placeholder="请再次输入密码">
+                </div>
+                <button onclick="showPage('home')" class="btn-primary w-full">注册</button>
+                <div class="text-center text-sm text-slate-500">
+                    已有账号？<a href="#" onclick="showPage('login'); return false;"
+                        class="text-sky-500 hover:underline">返回登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用布局 -->
+    <div id="app-layout" class="hidden">
+        <!-- 侧边栏 -->
+        <aside class="fixed left-0 top-0 h-full w-64 bg-white border-r border-slate-200 p-4">
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold text-sky-500">LingoFlow</h1>
+            </div>
+            <nav class="space-y-1" id="nav-menu">
+                <a href="#" onclick="showAppPage('home'); return false;"
+                    class="nav-item active flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-50"
+                    data-page="home">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    首页
+                </a>
+                <a href="#" onclick="showAppPage('learn'); return false;"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-50"
+                    data-page="learn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                        </path>
+                    </svg>
+                    学习
+                </a>
+                <a href="#" onclick="showAppPage('review'); return false;"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-50"
+                    data-page="review">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                    复习
+                </a>
+                <a href="#" onclick="showAppPage('vocabulary'); return false;"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-50"
+                    data-page="vocabulary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                        </path>
+                    </svg>
+                    生词本
+                </a>
+                <a href="#" onclick="showAppPage('stats'); return false;"
+                    class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-slate-50"
+                    data-page="stats">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    统计
+                </a>
+            </nav>
+            <div class="absolute bottom-4 left-4 right-4">
+                <a href="#" onclick="logout(); return false;"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                        </path>
+                    </svg>
+                    退出登录
+                </a>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="ml-64 p-8">
+            <!-- 首页 -->
+            <div id="home-content" class="app-page">
+                <h2 class="text-2xl font-semibold text-slate-800 mb-6">欢迎回来！</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="card p-6">
+                        <div class="text-sm text-slate-500 mb-2">今日学习</div>
+                        <div class="text-3xl font-bold text-sky-500">12 词</div>
+                        <div class="text-sm text-slate-400 mt-1">目标: 20 词/天</div>
+                    </div>
+                    <div class="card p-6">
+                        <div class="text-sm text-slate-500 mb-2">待复习</div>
+                        <div class="text-3xl font-bold text-amber-500">8 词</div>
+                        <div class="text-sm text-slate-400 mt-1">优先完成</div>
+                    </div>
+                    <div class="card p-6">
+                        <div class="text-sm text-slate-500 mb-2">连续学习</div>
+                        <div class="text-3xl font-bold text-green-500">7 天</div>
+                        <div class="text-sm text-slate-400 mt-1">继续保持!</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-6">
+                        <h3 class="text-lg font-semibold text-slate-800 mb-4">快速开始</h3>
+                        <div class="space-y-3">
+                            <button onclick="showAppPage('learn')"
+                                class="w-full flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-sky-300 hover:bg-sky-50 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <div class="font-medium text-slate-800">开始学习</div>
+                                        <div class="text-sm text-slate-500">学习新单词</div>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                            <button onclick="showAppPage('review')"
+                                class="w-full flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-amber-300 hover:bg-amber-50 transition">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <div class="font-medium text-slate-800">开始复习</div>
+                                        <div class="text-sm text-slate-500">复习已学单词</div>
+                                    </div>
+                                </div>
+                                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-semibold text-slate-800 mb-4">本周学习</h3>
+                        <div class="flex items-end justify-between h-40">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-8 bg-sky-200 rounded" style="height: 60px;"></div>
+                                <span class="text-xs text-slate-500">一</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-8 bg-sky-300 rounded" style="height: 80px;"></div>
+                                <span class="text-xs text-slate-500">二</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-8 bg-sky-200 rounded" style="height: 50px;"></div>
+                                <span class="text-xs text-slate-500">三</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-8 bg-sky-400 rounded" style="height: 100px;"></div>
+                                <span class="text-xs text-slate-500">四</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-8 bg-sky-300 rounded" style="height: 90px;"></div>
+                                <span class="text-xs text-slate-500">五</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-8 bg-sky-200 rounded" style="height: 40px;"></div>
+                                <span class="text-xs text-slate-500">六</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-8 bg-sky-500 rounded" style="height: 70px;"></div>
+                                <span class="text-xs text-slate-500">日</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 学习页面 -->
+            <div id="learn-content" class="app-page hidden">
+                <!-- 步骤 1: 单词选择题测试 -->
+                <div id="learn-step1">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold text-slate-800">学习新单词</h2>
+                        <div class="text-sm text-slate-500">3 / 10</div>
+                    </div>
+                    <div class="progress-bar mb-8">
+                        <div class="progress-bar-fill" style="width: 30%;"></div>
+                    </div>
+                    <div class="card p-6 mb-6">
+                        <div class="text-center mb-6">
+                            <span class="text-3xl font-bold text-slate-800">ephemeral</span>
+                            <p class="text-slate-400 mt-2">请选择正确的释义</p>
+                        </div>
+                        <div class="space-y-3" id="learn-options">
+                            <button onclick="handleLearnAnswer(this, false)" class="option-btn">
+                                A. 永恒的，永久的
+                            </button>
+                            <button onclick="handleLearnAnswer(this, true)" class="option-btn">
+                                B. 短暂的，转瞬即逝的
+                            </button>
+                            <button onclick="handleLearnAnswer(this, false)" class="option-btn">
+                                C. 神秘的，难以理解的
+                            </button>
+                            <button onclick="handleLearnAnswer(this, false)" class="option-btn">
+                                D. 普遍的，常见的
+                            </button>
+                        </div>
+                    </div>
+                    <!-- 答对后显示的操作区 -->
+                    <div id="learn-correct-action" class="hidden">
+                        <div class="card p-4 mb-4 bg-green-50 border-green-200">
+                            <div class="flex items-center gap-2 text-green-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <span class="font-medium">回答正确！</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <button onclick="skipToNext()" class="btn-secondary flex-1">跳过此词</button>
+                            <button onclick="addAndContinue()" class="btn-primary flex-1">加入生词本</button>
+                        </div>
+                    </div>
+                    <!-- 答错后显示的信息 -->
+                    <div id="learn-wrong-action" class="hidden">
+                        <div class="card p-4 mb-4 bg-red-50 border-red-200">
+                            <div class="flex items-center gap-2 text-red-700 mb-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                <span class="font-medium">回答错误，已自动加入生词本</span>
+                            </div>
+                            <p class="text-sm text-slate-600"><strong>ephemeral</strong>: adj. 短暂的，转瞬即逝的</p>
+                            <p class="text-sm text-slate-500 mt-1">例句: Fame is often ephemeral in the entertainment
+                                industry.</p>
+                        </div>
+                        <button onclick="continueToNext()" class="btn-primary w-full">继续下一个</button>
+                    </div>
+                </div>
+
+                <!-- 步骤 2: AI 文章阅读 -->
+                <div id="learn-step2" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold text-slate-800">阅读理解</h2>
+                        <button onclick="showLearnStep(3)" class="btn-primary">完成阅读</button>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-lg font-semibold text-slate-800 mb-4">The Art of Living in the Moment</h3>
+                        <div class="prose text-slate-600 leading-relaxed">
+                            <p class="mb-4">
+                                In our fast-paced modern world, we often forget that life is fundamentally <span
+                                    class="highlight">ephemeral</span>.
+                                Every moment passes by like clouds moving across the sky, beautiful but <span
+                                    class="highlight">transient</span>.
+                            </p>
+                            <p class="mb-4">
+                                The ancient philosophers understood this truth deeply. They taught that true wisdom lies
+                                in
+                                <span class="highlight">embracing</span> the present moment without clinging to it. This
+                                philosophy
+                                remains remarkably <span class="highlight">relevant</span> today.
+                            </p>
+                            <p>
+                                When we learn to appreciate the <span class="highlight">fleeting</span> nature of
+                                existence,
+                                we paradoxically find more peace and contentment. The key is not to fight against time,
+                                but to flow with it gracefully.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤 3: 造句练习 -->
+                <div id="learn-step3" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold text-slate-800">造句练习</h2>
+                        <div class="text-sm text-slate-500">1 / 5</div>
+                    </div>
+                    <div class="card p-6 mb-6">
+                        <div class="text-center mb-4">
+                            <span class="text-2xl font-bold text-sky-500">ephemeral</span>
+                            <p class="text-slate-500 mt-2">adj. 短暂的，转瞬即逝的</p>
+                        </div>
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">使用这个单词造句</label>
+                            <textarea
+                                class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 h-24"
+                                placeholder="请输入你的句子...">The beauty of cherry blossoms is ephemeral, lasting only a few weeks each spring.</textarea>
+                        </div>
+                        <button onclick="showLearnStep(4)" class="btn-primary w-full mt-4">提交批改</button>
+                    </div>
+                </div>
+
+                <!-- 步骤 4: AI 批改反馈 -->
+                <div id="learn-step4" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold text-slate-800">AI 批改结果</h2>
+                    </div>
+                    <div class="card p-6 mb-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-green-600">优秀!</div>
+                                <div class="text-sm text-slate-500">语法正确，用词准确</div>
+                            </div>
+                            <div class="ml-auto text-3xl font-bold text-green-500">95分</div>
+                        </div>
+                        <div class="bg-slate-50 rounded-lg p-4 mb-4">
+                            <p class="text-slate-700">"The beauty of cherry blossoms is ephemeral, lasting only a few
+                                weeks each spring."</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-2">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <div class="text-sm text-slate-600">单词使用正确，准确表达了"短暂"的含义</div>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <svg class="w-5 h-5 text-green-500 mt-0.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                <div class="text-sm text-slate-600">句式结构完整，使用了分词短语补充说明</div>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <svg class="w-5 h-5 text-sky-500 mt-0.5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div class="text-sm text-slate-600">建议: 可以尝试使用更复杂的从句结构来丰富表达</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <button onclick="showLearnStep(3)" class="btn-secondary flex-1">继续造句</button>
+                        <button onclick="showAppPage('home')" class="btn-primary flex-1">完成学习</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 复习页面 -->
+            <div id="review-content" class="app-page hidden">
+                <!-- 步骤 1: 熟悉度自评 -->
+                <div id="review-step1">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold text-slate-800">复习单词</h2>
+                        <div class="text-sm text-slate-500">5 / 8</div>
+                    </div>
+                    <div class="progress-bar mb-8">
+                        <div class="progress-bar-fill" style="width: 62%;"></div>
+                    </div>
+                    <div class="card mb-6">
+                        <div class="word-card">
+                            ubiquitous
+                        </div>
+                    </div>
+                    <div class="text-center text-slate-500 mb-6">你对这个单词的熟悉程度是？</div>
+                    <div class="flex justify-center gap-4">
+                        <button onclick="showReviewStep(2)"
+                            class="btn-secondary px-6 py-3 border-red-200 text-red-500 hover:bg-red-50">不认识</button>
+                        <button onclick="showReviewStep(2)"
+                            class="btn-secondary px-6 py-3 border-amber-200 text-amber-500 hover:bg-amber-50">模糊</button>
+                        <button onclick="showReviewStep(3)"
+                            class="btn-secondary px-6 py-3 border-green-200 text-green-500 hover:bg-green-50">认识</button>
+                    </div>
+                </div>
+
+                <!-- 步骤 2: 展示含义 (不认识/模糊) -->
+                <div id="review-step2" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold text-slate-800">单词释义</h2>
+                    </div>
+                    <div class="card p-6 mb-6">
+                        <div class="text-center mb-6">
+                            <span class="text-3xl font-bold text-slate-800">ubiquitous</span>
+                            <p class="text-slate-500 mt-1">/juːˈbɪkwɪtəs/</p>
+                        </div>
+                        <div class="bg-sky-50 rounded-lg p-4 mb-4">
+                            <p class="font-medium text-sky-700">adj. 无处不在的，普遍存在的</p>
+                        </div>
+                        <div class="space-y-3">
+                            <p class="text-slate-600"><span class="font-medium">例句:</span> Smartphones have become
+                                ubiquitous in modern society.</p>
+                            <p class="text-slate-600"><span class="font-medium">助记:</span> ubi (everywhere) + quit =
+                                到处都有</p>
+                        </div>
+                    </div>
+                    <button onclick="showReviewStep(1)" class="btn-primary w-full">继续复习</button>
+                </div>
+
+                <!-- 步骤 3: 选择题测试 -->
+                <div id="review-step3" class="hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-semibold text-slate-800">测试一下</h2>
+                    </div>
+                    <div class="card p-6 mb-6">
+                        <div class="text-center mb-6">
+                            <span class="text-2xl font-bold text-slate-800">ubiquitous</span>
+                            <p class="text-slate-500 mt-2">请选择正确的释义</p>
+                        </div>
+                        <div class="space-y-3" id="review-options">
+                            <button onclick="handleReviewAnswer(this, false)" class="option-btn">
+                                A. 独特的，独一无二的
+                            </button>
+                            <button onclick="handleReviewAnswer(this, true)" class="option-btn">
+                                B. 无处不在的，普遍存在的
+                            </button>
+                            <button onclick="handleReviewAnswer(this, false)" class="option-btn">
+                                C. 模糊的，不清楚的
+                            </button>
+                            <button onclick="handleReviewAnswer(this, false)" class="option-btn">
+                                D. 紧急的，迫切的
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 复习完成 -->
+                <div id="review-complete" class="hidden">
+                    <div class="card p-8 text-center">
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2">复习完成！</h3>
+                        <p class="text-slate-500 mb-6">今日复习 8 个单词，正确率 87.5%</p>
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <div class="text-2xl font-bold text-green-600">7</div>
+                                <div class="text-sm text-green-600">正确</div>
+                            </div>
+                            <div class="bg-red-50 rounded-lg p-4">
+                                <div class="text-2xl font-bold text-red-600">1</div>
+                                <div class="text-sm text-red-600">错误</div>
+                            </div>
+                            <div class="bg-sky-50 rounded-lg p-4">
+                                <div class="text-2xl font-bold text-sky-600">3</div>
+                                <div class="text-sm text-sky-600">待强化</div>
+                            </div>
+                        </div>
+                        <button onclick="showAppPage('home')" class="btn-primary">返回首页</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生词本页面 -->
+            <div id="vocabulary-content" class="app-page hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-slate-800">生词本</h2>
+                    <button class="btn-primary">添加单词</button>
+                </div>
+                <div class="card">
+                    <div class="p-4 border-b border-slate-100">
+                        <input type="text"
+                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            placeholder="搜索单词...">
+                    </div>
+                    <div class="divide-y divide-slate-100">
+                        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
+                            <div>
+                                <div class="font-medium text-slate-800">ephemeral</div>
+                                <div class="text-sm text-slate-500">adj. 短暂的，转瞬即逝的</div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-sm text-green-500">已掌握 80%</div>
+                                <button class="text-slate-400 hover:text-red-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
+                            <div>
+                                <div class="font-medium text-slate-800">ubiquitous</div>
+                                <div class="text-sm text-slate-500">adj. 无处不在的，普遍存在的</div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-sm text-amber-500">学习中 45%</div>
+                                <button class="text-slate-400 hover:text-red-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
+                            <div>
+                                <div class="font-medium text-slate-800">serendipity</div>
+                                <div class="text-sm text-slate-500">n. 意外发现珍奇事物的天赋</div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-sm text-red-500">新词</div>
+                                <button class="text-slate-400 hover:text-red-500">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计页面 -->
+            <div id="stats-content" class="app-page hidden">
+                <h2 class="text-2xl font-semibold text-slate-800 mb-6">学习统计</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="card p-6">
+                        <div class="text-sm text-slate-500 mb-2">累计学习</div>
+                        <div class="text-3xl font-bold text-sky-500">256 词</div>
+                    </div>
+                    <div class="card p-6">
+                        <div class="text-sm text-slate-500 mb-2">已掌握</div>
+                        <div class="text-3xl font-bold text-green-500">180 词</div>
+                    </div>
+                    <div class="card p-6">
+                        <div class="text-sm text-slate-500 mb-2">学习中</div>
+                        <div class="text-3xl font-bold text-amber-500">56 词</div>
+                    </div>
+                    <div class="card p-6">
+                        <div class="text-sm text-slate-500 mb-2">复习正确率</div>
+                        <div class="text-3xl font-bold text-purple-500">85%</div>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4">月度学习曲线</h3>
+                    <div class="h-64 flex items-end justify-between gap-2 px-4">
+                        <div class="flex-1 bg-sky-200 rounded-t" style="height: 40%;"></div>
+                        <div class="flex-1 bg-sky-300 rounded-t" style="height: 55%;"></div>
+                        <div class="flex-1 bg-sky-200 rounded-t" style="height: 35%;"></div>
+                        <div class="flex-1 bg-sky-400 rounded-t" style="height: 70%;"></div>
+                        <div class="flex-1 bg-sky-300 rounded-t" style="height: 60%;"></div>
+                        <div class="flex-1 bg-sky-500 rounded-t" style="height: 85%;"></div>
+                        <div class="flex-1 bg-sky-400 rounded-t" style="height: 75%;"></div>
+                        <div class="flex-1 bg-sky-300 rounded-t" style="height: 50%;"></div>
+                        <div class="flex-1 bg-sky-200 rounded-t" style="height: 45%;"></div>
+                        <div class="flex-1 bg-sky-400 rounded-t" style="height: 65%;"></div>
+                        <div class="flex-1 bg-sky-500 rounded-t" style="height: 90%;"></div>
+                        <div class="flex-1 bg-sky-400 rounded-t" style="height: 80%;"></div>
+                    </div>
+                    <div class="flex justify-between mt-4 text-sm text-slate-500 px-4">
+                        <span>1月</span>
+                        <span>2月</span>
+                        <span>3月</span>
+                        <span>4月</span>
+                        <span>5月</span>
+                        <span>6月</span>
+                        <span>7月</span>
+                        <span>8月</span>
+                        <span>9月</span>
+                        <span>10月</span>
+                        <span>11月</span>
+                        <span>12月</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 页面切换
+        function showPage(page) {
+            // Hide all main containers
+            const loginPage = document.getElementById('login-page');
+            const registerPage = document.getElementById('register-page');
+            const appLayout = document.getElementById('app-layout');
+
+            loginPage.classList.add('hidden');
+            loginPage.classList.remove('flex');
+
+            registerPage.classList.add('hidden');
+            registerPage.classList.remove('flex');
+
+            appLayout.classList.add('hidden');
+
+            // Show target container
+            if (page === 'login') {
+                loginPage.classList.remove('hidden');
+                loginPage.classList.add('flex');
+            } else if (page === 'register') {
+                registerPage.classList.remove('hidden');
+                registerPage.classList.add('flex');
+            } else {
+                appLayout.classList.remove('hidden');
+                showAppPage(page);
+            }
+        }
+
+        function showAppPage(page) {
+            // 隐藏所有应用内页面
+            document.querySelectorAll('.app-page').forEach(p => p.classList.add('hidden'));
+
+            // 更新导航高亮
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const activeNav = document.querySelector(`.nav-item[data-page="${page}"]`);
+            if (activeNav) {
+                activeNav.classList.add('active');
+            }
+
+            // 显示目标页面
+            const contentEl = document.getElementById(page + '-content');
+            if (contentEl) {
+                contentEl.classList.remove('hidden');
+            }
+
+            // 重置学习和复习步骤
+            if (page === 'learn') {
+                resetLearnStep();
+            }
+            if (page === 'review') {
+                resetReviewStep();
+            }
+        }
+
+        function showLearnStep(step) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById('learn-step' + i);
+                if (el) el.classList.add('hidden');
+            }
+            const targetEl = document.getElementById('learn-step' + step);
+            if (targetEl) targetEl.classList.remove('hidden');
+        }
+
+        function resetLearnStep() {
+            showLearnStep(1);
+            // 重置选项状态
+            document.querySelectorAll('#learn-options .option-btn').forEach(btn => {
+                btn.classList.remove('correct', 'wrong');
+                btn.disabled = false;
+            });
+            document.getElementById('learn-correct-action').classList.add('hidden');
+            document.getElementById('learn-wrong-action').classList.add('hidden');
+        }
+
+        function handleLearnAnswer(btn, isCorrect) {
+            // 禁用所有选项
+            document.querySelectorAll('#learn-options .option-btn').forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                document.getElementById('learn-correct-action').classList.remove('hidden');
+            } else {
+                btn.classList.add('wrong');
+                // 显示正确答案
+                document.querySelectorAll('#learn-options .option-btn').forEach(b => {
+                    if (b.textContent.includes('短暂的')) b.classList.add('correct');
+                });
+                document.getElementById('learn-wrong-action').classList.remove('hidden');
+            }
+        }
+
+        function skipToNext() {
+            // 跳过此词，继续下一个（模拟直接进入文章阅读）
+            showLearnStep(2);
+        }
+
+        function addAndContinue() {
+            // 加入生词本，继续进入文章阅读
+            showLearnStep(2);
+        }
+
+        function continueToNext() {
+            // 继续进入文章阅读
+            showLearnStep(2);
+        }
+
+        function showReviewStep(step) {
+            document.getElementById('review-step1').classList.add('hidden');
+            document.getElementById('review-step2').classList.add('hidden');
+            document.getElementById('review-step3').classList.add('hidden');
+            document.getElementById('review-complete').classList.add('hidden');
+
+            const targetEl = document.getElementById('review-step' + step);
+            if (targetEl) targetEl.classList.remove('hidden');
+        }
+
+        function resetReviewStep() {
+            showReviewStep(1);
+            // 重置选项状态
+            document.querySelectorAll('#review-options .option-btn').forEach(btn => {
+                btn.classList.remove('correct', 'wrong');
+                btn.disabled = false;
+            });
+        }
+
+        function handleReviewAnswer(btn, isCorrect) {
+            // 禁用所有选项
+            document.querySelectorAll('#review-options .option-btn').forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                setTimeout(() => {
+                    showReviewStep(1);
+                    resetReviewStep();
+                }, 1000);
+            } else {
+                btn.classList.add('wrong');
+                // 显示正确答案
+                document.querySelectorAll('#review-options .option-btn').forEach(b => {
+                    if (b.textContent.includes('无处不在')) b.classList.add('correct');
+                });
+                setTimeout(() => {
+                    showReviewStep(2); // 展示含义
+                }, 1500);
+            }
+        }
+
+        function logout() {
+            document.getElementById('app-layout').classList.add('hidden');
+            showPage('login');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lingoflow.mapper.SessionWordMapper">
+    
+    <resultMap id="SessionWordResultMap" type="com.lingoflow.entity.SessionWord">
+        <id property="id" column="id"/>
+        <result property="sessionId" column="session_id"/>
+        <result property="vocabularyId" column="vocabulary_id"/>
+        <result property="actionType" column="action_type"/>
+        <result property="userSentence" column="user_sentence"/>
+        <result property="aiFeedback" column="ai_feedback"/>
+        <result property="score" column="score"/>
+        <result property="questionType" column="question_type"/>
+        <result property="questionData" column="question_data"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+    
+    <select id="findById" resultMap="SessionWordResultMap">
+        SELECT * FROM session_words WHERE id = #{id}
+    </select>
+    
+    <select id="findBySessionId" resultMap="SessionWordResultMap">
+        SELECT * FROM session_words WHERE session_id = #{sessionId} ORDER BY created_at
+    </select>
+    
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO session_words (session_id, vocabulary_id, action_type, user_sentence, ai_feedback, score, question_type, question_data, created_at)
+        VALUES (#{sessionId}, #{vocabularyId}, #{actionType}, #{userSentence}, #{aiFeedback}, #{score}, #{questionType}, #{questionData}, NOW())
+    </insert>
+    
+    <update id="update">
+        UPDATE session_words SET
+            user_sentence = #{userSentence},
+            ai_feedback = #{aiFeedback},
+            score = #{score},
+            question_type = #{questionType},
+            question_data = #{questionData}
+        WHERE id = #{id}
+    </update>
+</mapper>
