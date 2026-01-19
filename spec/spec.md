@@ -163,6 +163,7 @@ lingoflow/
 | 2026-01-17 19:10 | to-spec | Phase 1 完成同步：标记基础设施任务完成，更新目录结构 (repository→mapper) |
 | 2026-01-18 16:09 | to-spec | Phase 2-3 完成同步：标记学习模块和复习系统完成，更新 review_records 表定义，添加 isFromErrorQueue 参数 |
 | 2026-01-18 18:10 | to-spec | Phase 4 完成同步：标记用户体验优化完成（统计仪表盘、周学习曲线、Premium UI/UX、MainLayout持久化导航、错误处理），添加 layouts/ 目录到项目结构，更新统计 API 定义 |
+| 2026-01-20 00:27 | to-spec | Phase 6-8 完成同步：标记词典系统、学习定制、阅读理解完成；补全 LearningSession/SessionWord 实体字段和 MyBatis 映射；更新 word_dictionary_tags 表定义添加 created_at 字段 |
 
 ---
 

@@ -19,6 +19,7 @@
 | id | BIGINT | PK, AUTO_INCREMENT | 标签ID |
 | word_id | BIGINT | FK -> words.id | 单词ID |
 | dictionary_id | BIGINT | FK -> dictionaries.id | 词典ID |
+| created_at | DATETIME | DEFAULT NOW() | 创建时间 |
 
 **索引**: `uk_word_dict` (word_id, dictionary_id)
 
