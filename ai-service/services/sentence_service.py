@@ -18,33 +18,35 @@ def evaluate_sentence(word: str, meaning: str, sentence: str) -> dict:
     Returns:
         dict: 包含 score, isCorrect, feedback
     """
-    prompt = f"""You are an English teacher evaluating a student's sentence. The student was asked to use the word "{word}" (meaning: {meaning}) in a sentence.
+    prompt = f"""你是一位专业的英语教师，正在批改学生使用单词"{word}"（意思：{meaning}）造的句子。
 
-Student's sentence: "{sentence}"
+学生的句子："{sentence}"
 
-Please evaluate the sentence based on:
-1. Grammar correctness
-2. Proper usage of the target word "{word}"
-3. Sentence clarity and naturalness
+请从以下三个方面评估这个句子：
+1. 语法正确性
+2. 目标单词"{word}"的使用是否恰当
+3. 句子的表达是否清晰自然
 
-Output format (JSON):
+**重要：所有评价内容必须使用中文书写**，只有在给出英文例句建议时才使用英文。
+
+输出格式（JSON）：
 {{
-    "score": 0-100,
-    "isCorrect": true/false,
+    "score": 0-100的分数,
+    "isCorrect": true或false（80分以上为true）,
     "feedback": {{
-        "grammar": "Grammar evaluation comment",
-        "usage": "Word usage evaluation comment",
-        "suggestion": "Improvement suggestion if any"
+        "grammar": "语法评价（中文）",
+        "usage": "单词使用评价（中文）",
+        "suggestion": "改进建议（中文，可包含英文例句）"
     }}
 }}
 
-Provide your evaluation:"""
+请给出你的评价："""
 
     try:
         response = client.chat.completions.create(
             model=Config.SILICONFLOW_MODEL,
             messages=[
-                {"role": "system", "content": "You are a helpful English teacher. Always respond with valid JSON."},
+                {"role": "system", "content": "你是一位专业的英语教师，帮助学生提高英语写作能力。请始终以有效的JSON格式回复，评价内容使用中文。"},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.3,

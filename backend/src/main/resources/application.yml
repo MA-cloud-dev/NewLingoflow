@@ -17,7 +17,7 @@ mybatis:
 
 jwt:
   secret: ${JWT_SECRET:lingoflow-default-secret-key-for-development-only-please-change-in-production}
-  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:604800000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 logging:

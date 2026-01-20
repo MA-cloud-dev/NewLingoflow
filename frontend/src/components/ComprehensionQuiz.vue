@@ -13,6 +13,39 @@
 
     <!-- Question Card -->
     <div class="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
+      
+      <!-- Question Progress Bar / Navigator -->
+      <div class="mb-8">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">题目进度</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            v-for="(_, idx) in questions"
+            :key="idx"
+            @click="goToQuestion(idx)"
+            class="flex-1 h-2.5 rounded-full transition-all duration-300 relative group cursor-pointer"
+            :class="getProgressBarClass(idx)"
+          >
+            <!-- Tooltip showing question number -->
+            <div class="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-800 text-white text-xs font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              第 {{ idx + 1 }} 题
+            </div>
+          </button>
+        </div>
+        <!-- Question type indicator -->
+        <div class="flex justify-between mt-2">
+          <span 
+            v-for="(q, idx) in questions" 
+            :key="'type-' + idx"
+            class="flex-1 text-center text-[10px] font-medium"
+            :class="idx === currentIndex ? 'text-blue-600' : 'text-slate-300'"
+          >
+            {{ q.type === 'main_idea' ? 'Main' : 'Vocab' }}
+          </span>
+        </div>
+      </div>
+
       <!-- Tag -->
       <div class="mb-6">
         <span 
@@ -39,7 +72,7 @@
           v-for="(option, idx) in currentQuestion.options"
           :key="idx"
           @click="selectOption(idx)"
-          :disabled="hasAnswered"
+          :disabled="answeredQuestions[currentIndex]"
           class="w-full p-5 rounded-2xl border-2 text-left transition-all duration-200 flex items-start gap-4 group"
           :class="getOptionClass(idx)"
         >
@@ -79,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import type { ComprehensionQuestion } from '@/api/learning'
 
 const props = defineProps<{
@@ -91,14 +124,26 @@ const emit = defineEmits<{
 }>()
 
 const currentIndex = ref(0)
-const selectedOptionIndex = ref<number | null>(null)
-const hasAnswered = ref(false)
+// 存储每个题目的选择状态
+const selectedOptions = reactive<(number | null)[]>(
+  Array(props.questions.length).fill(null)
+)
+// 存储每个题目是否已回答
+const answeredQuestions = reactive<boolean[]>(
+  Array(props.questions.length).fill(false)
+)
 
 const currentQuestion = computed(() => props.questions[currentIndex.value])
 const isLastQuestion = computed(() => currentIndex.value === props.questions.length - 1)
+// 检查是否所有题目都已回答
+const allAnswered = computed(() => answeredQuestions.every(a => a))
 
-// Helper to extract option index "A", "B", "C", "D" from answer string (usually backend returns "B")
-// Assuming backend returns "A", "B", "C" or "D" as correctAnswer
+// 当前题目的选中索引
+const selectedOptionIndex = computed(() => selectedOptions[currentIndex.value])
+// 当前题目是否已回答
+const hasAnswered = computed(() => answeredQuestions[currentIndex.value])
+
+// Helper to extract option index "A", "B", "C", "D" from answer string
 const correctIndex = computed(() => {
   const ans = currentQuestion.value.correctAnswer.trim().toUpperCase()
   return ans.charCodeAt(0) - 65
@@ -107,9 +152,16 @@ const correctIndex = computed(() => {
 const isCorrect = computed(() => selectedOptionIndex.value === correctIndex.value)
 
 const selectOption = (idx: number) => {
-  if (hasAnswered.value) return
-  selectedOptionIndex.value = idx
-  hasAnswered.value = true
+  if (answeredQuestions[currentIndex.value]) return
+  selectedOptions[currentIndex.value] = idx
+  answeredQuestions[currentIndex.value] = true
+}
+
+// 切换到指定题目
+const goToQuestion = (idx: number) => {
+  if (idx >= 0 && idx < props.questions.length) {
+    currentIndex.value = idx
+  }
 }
 
 const nextQuestion = () => {
@@ -117,9 +169,21 @@ const nextQuestion = () => {
     emit('complete')
   } else {
     currentIndex.value++
-    selectedOptionIndex.value = null
-    hasAnswered.value = false
   }
+}
+
+// 进度条样式
+const getProgressBarClass = (idx: number) => {
+  if (idx === currentIndex.value) {
+    // 当前题目 - 高亮
+    return 'bg-blue-500 ring-2 ring-blue-300 ring-offset-1'
+  }
+  if (answeredQuestions[idx]) {
+    // 已回答 - 绿色
+    return 'bg-emerald-400 hover:bg-emerald-500'
+  }
+  // 未回答 - 灰色
+  return 'bg-slate-200 hover:bg-slate-300'
 }
 
 const getOptionClass = (idx: number) => {

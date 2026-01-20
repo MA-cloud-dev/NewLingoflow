@@ -20,6 +20,8 @@ public interface VocabularyMapper {
 
     List<Vocabulary> findByIds(@Param("ids") List<Long> ids);
 
+    List<Vocabulary> findByUserIdAndWordIds(@Param("userId") Long userId, @Param("wordIds") List<Long> wordIds);
+
     int countByUserId(@Param("userId") Long userId, @Param("status") String status);
 
     boolean existsByUserIdAndWordId(@Param("userId") Long userId, @Param("wordId") Long wordId);

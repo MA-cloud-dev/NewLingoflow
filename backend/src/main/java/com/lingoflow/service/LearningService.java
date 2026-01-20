@@ -102,6 +102,8 @@ public class LearningService {
         }
 
         String targetWord = vocabulary.getWord().getWord();
+        Long wordId = vocabulary.getWord().getId();
+
         if (!sentence.toLowerCase().contains(targetWord.toLowerCase())) {
             throw new BusinessException(2021, "句子中未包含目标单词 '" + targetWord + "'");
         }
@@ -125,18 +127,54 @@ public class LearningService {
             Map<String, Object> responseBody = response.getBody();
             if (responseBody != null && (Integer) responseBody.get("code") == 200) {
                 Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                Integer newScore = (Integer) data.get("score");
 
-                // 保存造句记录
-                SessionWord sessionWord = new SessionWord();
-                sessionWord.setSessionId(sessionId);
-                sessionWord.setVocabularyId(vocabularyId);
-                sessionWord.setActionType("sentence");
-                sessionWord.setUserSentence(sentence);
-                sessionWord.setAiFeedback(data.toString());
-                sessionWord.setScore((Integer) data.get("score"));
-                sessionWordMapper.insert(sessionWord);
+                // 查询用户对该单词是否已有造句记录
+                SessionWord existingSentence = sessionWordMapper.findSentenceByUserIdAndWordId(userId, wordId);
 
-                return data;
+                Map<String, Object> result = new HashMap<>(data);
+
+                if (existingSentence != null) {
+                    // 已有造句记录，只有新分数 >= 旧分数才替换
+                    if (newScore >= existingSentence.getScore()) {
+                        // 删除旧记录
+                        sessionWordMapper.deleteById(existingSentence.getId());
+
+                        // 保存新记录
+                        SessionWord sessionWord = new SessionWord();
+                        sessionWord.setSessionId(sessionId);
+                        sessionWord.setVocabularyId(vocabularyId);
+                        sessionWord.setActionType("sentence");
+                        sessionWord.setUserSentence(sentence);
+                        sessionWord.setAiFeedback(data.toString());
+                        sessionWord.setScore(newScore);
+                        sessionWordMapper.insert(sessionWord);
+
+                        result.put("replaced", true);
+                        result.put("previousScore", existingSentence.getScore());
+                        result.put("message", "造句已更新（此前最高分: " + existingSentence.getScore() + "）");
+                    } else {
+                        // 新分数低于旧分数，不保存，返回旧记录信息
+                        result.put("replaced", false);
+                        result.put("previousScore", existingSentence.getScore());
+                        result.put("message", "此前造句得分更高（" + existingSentence.getScore() + " > " + newScore + "），保留原记录");
+                    }
+                } else {
+                    // 没有旧记录，直接保存
+                    SessionWord sessionWord = new SessionWord();
+                    sessionWord.setSessionId(sessionId);
+                    sessionWord.setVocabularyId(vocabularyId);
+                    sessionWord.setActionType("sentence");
+                    sessionWord.setUserSentence(sentence);
+                    sessionWord.setAiFeedback(data.toString());
+                    sessionWord.setScore(newScore);
+                    sessionWordMapper.insert(sessionWord);
+
+                    result.put("replaced", false);
+                    result.put("message", "造句已保存");
+                }
+
+                return result;
             } else {
                 throw new BusinessException(2011, "AI 服务返回错误");
             }

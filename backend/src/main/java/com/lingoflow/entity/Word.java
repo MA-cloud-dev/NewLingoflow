@@ -12,5 +12,6 @@ public class Word {
     private String meaningEn;
     private String exampleSentence;
     private String difficulty;
+    private String levelTags; // 词库级别标签，如 "CET-4,CET-6"
     private LocalDateTime createdAt;
 }

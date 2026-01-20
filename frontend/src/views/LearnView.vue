@@ -3,8 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
   getLearningWords, 
-  addToVocabulary, 
-  getUserVocabulary,
+  batchAddToVocabulary,
   generateArticle, 
   submitSentence,
   type Word, 
@@ -12,45 +11,52 @@ import {
   type ArticleData,
   type SentenceFeedback
 } from '@/api/learning'
-import LearningCustomizer, { type LearningSettings } from '@/components/LearningCustomizer.vue'
-import ArticleReader from '@/components/ArticleReader.vue'
+import LearningSettingsBar, { type LearningSettings } from '@/components/LearningSettingsBar.vue'
 import ComprehensionQuiz from '@/components/ComprehensionQuiz.vue'
 
 // 学习阶段
-type LearningPhase = 'quiz' | 'article' | 'comprehension' | 'sentence' | 'complete'
+type LearningPhase = 'quiz' | 'study' | 'complete'
 const phase = ref<LearningPhase>('quiz')
-const showCustomizer = ref(false)
-const learningSettings = ref<LearningSettings | null>(null)
+
+// 学习设置
+const learningSettings = ref<LearningSettings>({
+  theme: 'Daily Life',
+  difficulty: 'medium',
+  length: 'short'
+})
 
 // ========== 选词阶段 (Quiz) ==========
 const allWords = ref<Word[]>([])
 const currentWordIndex = ref(0)
-const selectedWords = ref<Word[]>([]) // 候选单词列表
+const selectedWords = ref<Word[]>([])
 const loadingWords = ref(false)
 
-// 当前单词和选项
-const currentWord = computed(() => allWords.value[currentWordIndex.value])
+// 四选一答题相关
 const quizOptions = ref<string[]>([])
 const selectedOption = ref<string | null>(null)
 const isCorrect = ref<boolean | null>(null)
 const showResult = ref(false)
 
-// 朗读设置
-const autoSpeak = ref(true) // 被动朗读开关
+const currentWord = computed(() => allWords.value[currentWordIndex.value])
+const autoSpeak = ref(true)
 
-// ========== 文章阶段 ==========
+// ========== 学习阶段 (文章+题目+造句一体化) ==========
 const currentArticle = ref<ArticleData | null>(null)
 const sessionId = ref<number | null>(null)
 const vocabularyItems = ref<VocabularyItem[]>([])
 const loadingArticle = ref(false)
 
-// ========== 造句阶段 ==========
-const sentenceWordIndex = ref(0)
+// 造句相关
+const selectedSentenceWordIndex = ref(0) // 当前选中的造句单词索引
 const userSentence = ref('')
 const feedback = ref<SentenceFeedback | null>(null)
 const submittingSentence = ref(false)
+const attemptCount = ref(0) // 当前单词的尝试次数
+const maxAttempts = 3 // 最大尝试次数
+const bestScores = ref<Map<number, number>>(new Map()) // 存储每个单词的最高分
+const showTranslation = ref(false) // 控制文章翻译显示
 
-const currentVocabulary = computed(() => vocabularyItems.value[sentenceWordIndex.value])
+const currentVocabulary = computed(() => vocabularyItems.value[selectedSentenceWordIndex.value])
 
 const currentSentenceTask = computed(() => {
   if (!currentArticle.value?.sentenceMakingTasks) return null
@@ -58,11 +64,19 @@ const currentSentenceTask = computed(() => {
   return currentArticle.value.sentenceMakingTasks.find(t => t.word === wordStr)
 })
 
-const showHint = ref(false)
+// 获取当前单词的最高分
+const currentBestScore = computed(() => {
+  if (!currentVocabulary.value) return null
+  return bestScores.value.get(currentVocabulary.value.id) || null
+})
+
+// 剩余尝试次数
+const remainingAttempts = computed(() => maxAttempts - attemptCount.value)
 
 // ========== 朗读功能 ==========
 function speakWord(word: string) {
   if ('speechSynthesis' in window) {
+    speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(word)
     utterance.lang = 'en-US'
     utterance.rate = 0.8
@@ -70,10 +84,13 @@ function speakWord(word: string) {
   }
 }
 
-// 监听当前单词变化，自动朗读
 watch(currentWord, (word) => {
   if (word && autoSpeak.value && phase.value === 'quiz') {
     setTimeout(() => speakWord(word.word), 300)
+  }
+  // 切换单词时重置状态
+  if (word) {
+    generateQuizOptions()
   }
 })
 
@@ -81,9 +98,10 @@ watch(currentWord, (word) => {
 async function loadWords() {
   loadingWords.value = true
   try {
-    const res = await getLearningWords(20) // 加载更多单词用于选择
+    const res = await getLearningWords(20)
     if (res.code === 200) {
       allWords.value = res.data.words
+      currentWordIndex.value = 0
       if (allWords.value.length > 0) {
         generateQuizOptions()
       }
@@ -114,6 +132,17 @@ function generateQuizOptions() {
   selectedOption.value = null
   isCorrect.value = null
   showResult.value = false
+  givenUp.value = false
+}
+
+const givenUp = ref(false)
+
+function giveUp() {
+  if (showResult.value) return
+  givenUp.value = true
+  showResult.value = true
+  // 标记正确答案但不选中任何选项（或者高亮正确答案）
+  isCorrect.value = false // 视为错误
 }
 
 function selectOption(option: string) {
@@ -124,74 +153,59 @@ function selectOption(option: string) {
   showResult.value = true
 }
 
-function skipWord() {
-  nextWord()
-}
-
 async function addWord() {
   if (!currentWord.value) return
   
-  // 添加到候选列表
   if (!selectedWords.value.find((w: Word) => w.id === currentWord.value.id)) {
     selectedWords.value.push(currentWord.value)
     ElMessage.success(`已添加「${currentWord.value.word}」(${selectedWords.value.length}/5)`)
   }
   
-  // 检查是否收集够 5 个
   if (selectedWords.value.length >= 5) {
-    await startArticlePhase()
+    await startStudyPhase()
   } else {
     nextWord()
   }
 }
 
+function skipWord() {
+  nextWord()
+}
+
 function nextWord() {
   if (currentWordIndex.value < allWords.value.length - 1) {
     currentWordIndex.value++
-    generateQuizOptions()
+    // generateQuizOptions 由 watch 触发
   } else {
-    // 单词用完了，检查候选数量
     if (selectedWords.value.length >= 5) {
-      startArticlePhase()
+      startStudyPhase()
     } else {
       ElMessage.warning(`需要至少 5 个单词，当前 ${selectedWords.value.length} 个`)
-      // 重新加载单词
       loadWords()
     }
   }
 }
 
-// ========== 文章阶段 ==========
-async function startArticlePhase() {
+// ========== 学习阶段（一体化） ==========
+async function startStudyPhase() {
   if (selectedWords.value.length === 0) {
     ElMessage.warning('请先选择单词')
     return
   }
   
-  if (!learningSettings.value) {
-    ElMessage.error('缺少定制配置')
-    return
-  }
-  
   loadingArticle.value = true
-  phase.value = 'article'
+  phase.value = 'study'
   
   try {
-    // 先将选中的单词加入生词本
-    for (const word of selectedWords.value) {
-      try {
-        await addToVocabulary(word.id)
-      } catch {
-        // 可能已经在生词本中
-      }
-    }
+    // 使用批量接口替换原来的循环添加 + 查询逻辑
+    const batchRes = await batchAddToVocabulary(selectedWords.value.map(w => w.id))
     
-    // 获取用户生词本
-    const vocabRes = await getUserVocabulary('all', 1, 100)
-    if (vocabRes.code === 200) {
-      vocabularyItems.value = vocabRes.data.vocabulary.filter((v: VocabularyItem) => 
-        selectedWords.value.some((sw: Word) => sw.id === v.wordId)
-      )
+    if (batchRes.code === 200) {
+      vocabularyItems.value = batchRes.data
+    } else {
+      ElMessage.error('处理生词失败')
+      phase.value = 'quiz'
+      return
     }
     
     if (vocabularyItems.value.length === 0) {
@@ -199,7 +213,6 @@ async function startArticlePhase() {
       return
     }
     
-    // 生成 AI 文章
     const articleRes = await generateArticle(
       vocabularyItems.value.map((v: VocabularyItem) => v.id),
       learningSettings.value.difficulty,
@@ -222,23 +235,12 @@ async function startArticlePhase() {
   }
 }
 
-async function handleConfirmSettings(settings: LearningSettings) {
-  learningSettings.value = settings
-  showCustomizer.value = false
-  await loadWords()
-  phase.value = 'quiz'
-}
-
-// function startComprehensionPhase() {
-//   // Merged into article phase
-// }
-
-function startSentencePractice() {
-  sentenceWordIndex.value = 0
+// ========== 造句相关 ==========
+function selectWordForSentence(index: number) {
+  selectedSentenceWordIndex.value = index
   userSentence.value = ''
   feedback.value = null
-  showHint.value = false
-  phase.value = 'sentence'
+  attemptCount.value = 0
 }
 
 async function submitUserSentence() {
@@ -248,6 +250,10 @@ async function submitUserSentence() {
   }
   
   if (!currentVocabulary.value || !sessionId.value) return
+  if (attemptCount.value >= maxAttempts) {
+    ElMessage.warning('已达到最大尝试次数')
+    return
+  }
   
   submittingSentence.value = true
   try {
@@ -259,6 +265,15 @@ async function submitUserSentence() {
     
     if (res.code === 200) {
       feedback.value = res.data
+      attemptCount.value++
+      
+      // 更新最高分
+      const currentScore = res.data.score
+      const vocabId = currentVocabulary.value.id
+      const prevBest = bestScores.value.get(vocabId) || 0
+      if (currentScore > prevBest) {
+        bestScores.value.set(vocabId, currentScore)
+      }
     }
   } catch (error: any) {
     ElMessage.error(error.response?.data?.msg || '提交失败')
@@ -267,15 +282,13 @@ async function submitUserSentence() {
   }
 }
 
-function nextSentenceWord() {
-  if (sentenceWordIndex.value < vocabularyItems.value.length - 1) {
-    sentenceWordIndex.value++
-    userSentence.value = ''
-    feedback.value = null
-    showHint.value = false
-  } else {
-    phase.value = 'complete'
-  }
+function retryCurrentWord() {
+  userSentence.value = ''
+  feedback.value = null
+}
+
+function finishLearning() {
+  phase.value = 'complete'
 }
 
 function resetLearning() {
@@ -285,30 +298,49 @@ function resetLearning() {
   currentArticle.value = null
   sessionId.value = null
   vocabularyItems.value = []
-  sentenceWordIndex.value = 0
+  selectedSentenceWordIndex.value = 0
   userSentence.value = ''
   feedback.value = null
+  attemptCount.value = 0
+  bestScores.value.clear()
+  // showMeaning.value = false
   loadWords()
 }
 
+// 解析文章内容，高亮目标单词
+const articleSegments = computed(() => {
+  if (!currentArticle.value?.content) return []
+  const parts = currentArticle.value.content.split(/(\*\*.*?\*\*)/g)
+  return parts.map(part => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const word = part.slice(2, -2)
+      const vocabItem = vocabularyItems.value.find(v => v.word?.word?.toLowerCase() === word.toLowerCase())
+      return {
+        text: word,
+        isHighlight: true,
+        meaning: vocabItem?.word?.meaningCn || ''
+      }
+    }
+    return { text: part, isHighlight: false, meaning: '' }
+  })
+})
+
 onMounted(() => {
-  showCustomizer.value = true
+  loadWords()
 })
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- 定制弹窗 -->
-    <div v-if="showCustomizer" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <LearningCustomizer @confirm="handleConfirmSettings" />
-    </div>
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- 顶部设置栏 -->
+    <LearningSettingsBar v-model="learningSettings" />
 
     <!-- ========== 选词阶段 ========== -->
     <div v-if="phase === 'quiz'" class="space-y-8">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-black text-slate-800 tracking-tight">单词探索</h1>
-          <p class="text-slate-500 font-medium">通过测试筛选你想要深入学习的生词</p>
+          <p class="text-slate-500 font-medium">点击查看含义，选择你想学习的生词</p>
         </div>
         <div class="flex items-center gap-6">
           <label class="flex items-center gap-2 text-sm font-bold text-slate-400 cursor-pointer hover:text-blue-500 transition-colors">
@@ -327,7 +359,7 @@ onMounted(() => {
         <span 
           v-for="w in selectedWords" 
           :key="w.id"
-          class="px-4 py-1.5 bg-white border border-blue-100 text-blue-600 rounded-2xl text-sm font-bold shadow-sm animate-in fade-in zoom-in duration-300"
+          class="px-4 py-1.5 bg-white border border-blue-100 text-blue-600 rounded-2xl text-sm font-bold shadow-sm"
         >
           {{ w.word }}
         </span>
@@ -352,6 +384,7 @@ onMounted(() => {
             </div>
             <div class="text-lg font-medium text-slate-400 font-serif italic">/ {{ currentWord.phonetic }} /</div>
           </div>
+          
           
           <div class="flex flex-col gap-3 mb-8">
             <button
@@ -379,21 +412,38 @@ onMounted(() => {
             </button>
           </div>
           
+          <!-- 显示答案按钮 (未答题时显示) -->
+          <div v-if="!showResult" class="text-center">
+            <button 
+              @click="giveUp"
+              class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              不知道？查看答案
+            </button>
+          </div>
+          
           <div v-if="showResult" class="flex flex-col items-center animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <!-- Result message removed to save space or kept minimal -->
+            <!-- 答案解析 -->
+            <div class="text-center mb-6 p-4 bg-slate-50 rounded-xl w-full">
+               <div class="text-xl font-bold text-slate-700">{{ currentWord.meaningCn }}</div>
+               <div v-if="currentWord.exampleSentence" class="mt-2 text-sm text-slate-500 italic">
+                 "{{ currentWord.exampleSentence }}"
+               </div>
+            </div>
+             
              <div class="flex gap-4 w-full">
                <button 
-                 v-if="isCorrect"
+                 v-if="isCorrect && !givenUp"
                  @click="skipWord" 
                  class="flex-1 py-3 px-4 rounded-xl border border-slate-200 font-bold text-slate-400 hover:bg-slate-50 transition-all text-sm"
                >
-                 跳过已会
+                 跳过
                </button>
                <button 
                  @click="addWord" 
                  class="flex-[2] py-3 px-4 rounded-xl bg-blue-600 text-white font-bold shadow-md hover:bg-blue-700 hover:-translate-y-0.5 transition-all outline-none text-sm"
                >
-                 {{ isCorrect ? '加入生词本' : '强制加入' }}
+                 {{ (isCorrect && !givenUp) ? '加入生词本' : '强制加入' }}
                </button>
              </div>
           </div>
@@ -401,9 +451,8 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- ========== 文章阅读阶段 ========== -->
-    <!-- ========== 文章阅读 & 阅读理解一体化阶段 ========== -->
-    <div v-else-if="phase === 'article'" class="space-y-8 max-w-4xl mx-auto">
+    <!-- ========== 学习阶段（文章+题目+造句一体化） ========== -->
+    <div v-else-if="phase === 'study'" class="space-y-6">
       <div v-if="loadingArticle" class="bg-white rounded-[2.5rem] border border-slate-100 p-20 text-center shadow-sm">
         <div class="relative w-16 h-16 mx-auto mb-8">
           <div class="absolute inset-0 border-4 border-blue-50 rounded-full"></div>
@@ -413,121 +462,241 @@ onMounted(() => {
       </div>
       
       <template v-else-if="currentArticle">
-        <!-- 文章区：限制高度，紧凑布局 -->
-        <ArticleReader 
-          :title="currentArticle.title"
-          :content="currentArticle.content"
-          @complete="() => {}" 
-        />
-        
-        <!-- 阅读理解区：位于文章下方 -->
-        <div v-if="currentArticle.comprehensionQuestions && currentArticle.comprehensionQuestions.length > 0" class="pt-8 border-t border-slate-100">
-           <ComprehensionQuiz 
-            :questions="currentArticle.comprehensionQuestions"
-            @complete="startSentencePractice"
-          />
+        <!-- 顶部导航栏 -->
+        <div class="flex items-center justify-between bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
+          <div class="flex items-center gap-4">
+            <button @click="resetLearning" class="text-slate-400 hover:text-slate-600 transition-colors">
+              ← 退出
+            </button>
+            <h1 class="text-xl font-black text-slate-800">每日学习</h1>
+          </div>
+          <div class="text-sm font-bold text-slate-400">
+            造句进度: {{ bestScores.size }} / {{ vocabularyItems.length }}
+          </div>
         </div>
-        
-        <div v-else class="flex justify-center pt-8">
-             <button @click="startSentencePractice" class="btn-primary">Start Practice</button>
-        </div>
-      </template>
-    </div>
 
-    <!-- Phase comprehension removed, merged above -->
+        <!-- 主内容区域：左右两栏布局 -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <!-- 左侧：文章 + 阅读理解 -->
+          <div class="lg:col-span-3 space-y-6">
+            <!-- 文章卡片 -->
+            <div class="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
+              <!-- 文章头部 -->
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-lg uppercase">
+                    {{ learningSettings.theme }}
+                  </span>
+                  <span class="text-xs text-slate-400 font-medium">CET-4</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <!-- 朗读文章按钮 -->
+                  <button 
+                    @click="speakWord(currentArticle.content.replace(/\*\*/g, ''))"
+                    class="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-blue-500 transition-colors"
+                  >
+                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                     </svg>
+                     朗读全文
+                  </button>
+                </div>
+              </div>
+              
+              <!-- 文章标题 -->
+              <h2 class="text-2xl font-black text-slate-900 mb-6">{{ currentArticle.title }}</h2>
+              
+              <!-- 文章内容 -->
+              <div class="text-lg text-slate-700 leading-relaxed font-serif">
+                <template v-for="(seg, idx) in articleSegments" :key="idx">
+                  <el-popover
+                    v-if="seg.isHighlight"
+                    placement="top"
+                    :width="220"
+                    trigger="hover"
+                  >
+                    <template #reference>
+                      <span class="highlight-word px-1 py-0.5 rounded-md text-amber-700 font-bold bg-amber-100 cursor-pointer hover:bg-amber-200 transition-colors">
+                        {{ seg.text }}
+                      </span>
+                    </template>
+                    <div class="text-center space-y-2 p-2">
+                      <div class="font-black text-slate-800 text-lg">{{ seg.text }}</div>
+                      <div class="text-slate-600 font-medium">{{ seg.meaning }}</div>
+                      <button 
+                        @click="speakWord(seg.text)"
+                        class="inline-flex items-center gap-1 text-xs font-bold text-blue-500 hover:text-blue-600"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                        </svg>
+                        朗读
+                      </button>
+                    </div>
+                  </el-popover>
+                  <span v-else>{{ seg.text }}</span>
+                </template>
+              </div>
 
-    <!-- ========== 造句练习阶段 ========== -->
-    <div v-else-if="phase === 'sentence' && currentVocabulary" class="space-y-10 max-w-2xl mx-auto">
-      <div class="flex items-center justify-between px-2">
-        <h1 class="text-3xl font-black text-slate-800 tracking-tight">造句演练</h1>
-        <div class="px-5 py-2 rounded-full bg-slate-100 text-slate-500 font-bold text-xs tracking-widest">
-          {{ sentenceWordIndex + 1 }} / {{ vocabularyItems.length }}
-        </div>
-      </div>
-      
-      <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
-        <div class="text-center p-6 bg-slate-50 rounded-[2rem]">
-          <h2 class="text-4xl font-black text-blue-600 mb-2 truncate">{{ currentVocabulary.word?.word }}</h2>
-          <div class="text-slate-400 font-medium italic mb-4">/ {{ currentVocabulary.word?.phonetic }} /</div>
-          
-          <div v-if="currentSentenceTask" class="mb-4">
-            <div class="inline-block px-3 py-1 rounded-lg bg-violet-100 text-violet-700 font-bold text-xs mb-3">
-              Theme: {{ currentSentenceTask.theme }}
+              <!-- 翻译区域 -->
+              <div v-if="currentArticle.chineseTranslation" class="mt-8 pt-6 border-t border-slate-100">
+                <button 
+                  @click="showTranslation = !showTranslation"
+                  class="w-full flex items-center justify-between text-slate-400 hover:text-blue-600 transition-colors group"
+                >
+                  <span class="text-sm font-bold uppercase tracking-widest">中文翻译</span>
+                  <svg 
+                    class="w-5 h-5 transform transition-transform duration-300"
+                    :class="showTranslation ? 'rotate-180' : ''"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                
+                <div 
+                  v-show="showTranslation"
+                  class="mt-4 text-base text-slate-600 leading-relaxed font-sans bg-slate-50 p-6 rounded-2xl animate-in slide-in-from-top-2 duration-300"
+                >
+                  {{ currentArticle.chineseTranslation }}
+                </div>
+              </div>
             </div>
             
-            <!-- 直接显示例句 -->
-            <div class="animate-in fade-in duration-500 space-y-3">
-              <div class="text-lg font-medium text-slate-800 bg-white p-4 rounded-xl shadow-sm border border-slate-100 italic leading-relaxed">
-                "{{ currentSentenceTask.chineseExample }}"
-              </div>
-              <!-- 释义隐藏，可点击查看 -->
-              <button 
-                v-if="!showHint"
-                @click="showHint = true" 
-                class="text-xs font-bold text-slate-300 hover:text-blue-500 transition-colors uppercase tracking-widest"
-              >
-                Show Definition
-              </button>
-              <div v-else class="text-base font-bold text-slate-500 animate-in fade-in">
-                {{ currentVocabulary.word?.meaningCn }}
-              </div>
+            <!-- 阅读理解题目 -->
+            <div v-if="currentArticle.comprehensionQuestions && currentArticle.comprehensionQuestions.length > 0" class="bg-white rounded-3xl border border-slate-100 p-8 shadow-sm">
+              <ComprehensionQuiz 
+                :questions="currentArticle.comprehensionQuestions"
+                @complete="() => {}"
+              />
             </div>
           </div>
           
-          <div v-else class="text-xl font-bold text-slate-700">{{ currentVocabulary.word?.meaningCn }}</div>
-        </div>
-        
-        <div class="space-y-4">
-          <textarea
-            v-model="userSentence"
-            rows="3"
-            class="w-full p-6 text-xl rounded-[1.5rem] border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-blue-500/20 focus:ring-[8px] focus:ring-blue-500/5 transition-all outline-none resize-none font-serif placeholder:text-slate-200"
-            placeholder="Build a creative sentence..."
-            :disabled="!!feedback"
-          ></textarea>
-        </div>
-        
-        <button 
-          v-if="!feedback"
-          :disabled="submittingSentence"
-          class="w-full py-4 rounded-xl bg-blue-600 text-white font-black text-lg shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all"
-          @click="submitUserSentence"
-        >
-          <span v-if="submittingSentence" class="flex items-center justify-center gap-2">
-            AI 批改中...
-          </span>
-          <span v-else>请求 AI 批改</span>
-        </button>
-      </div>
-      
-      <div v-if="feedback" class="bg-white p-12 rounded-[3rem] border border-slate-100 shadow-2xl space-y-10 animate-in slide-in-from-bottom-8 duration-500">
-        <div class="flex items-center gap-8 border-b border-slate-50 pb-10">
-          <div class="text-6xl font-black" :class="feedback.score >= 80 ? 'text-emerald-500' : 'text-amber-500'">{{ feedback.score }}</div>
-          <div>
-            <div class="text-xs font-black text-slate-300 uppercase tracking-widest mb-1">Score Result</div>
-            <div class="text-2xl font-black uppercase tracking-tight" :class="feedback.isCorrect ? 'text-emerald-600' : 'text-amber-600'">
-              {{ feedback.isCorrect ? 'Perfect' : 'Improve' }}
+          <!-- 右侧：造句练习 -->
+          <div class="lg:col-span-2">
+            <div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm sticky top-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                  ✏️ 造句练习
+                </h3>
+                <span class="text-sm font-bold text-slate-400">
+                  {{ selectedSentenceWordIndex + 1 }} / {{ vocabularyItems.length }}
+                </span>
+              </div>
+              
+              <!-- 单词选择器 -->
+              <div class="flex flex-wrap gap-2 mb-6">
+                <button
+                  v-for="(vocab, idx) in vocabularyItems"
+                  :key="vocab.id"
+                  @click="selectWordForSentence(idx)"
+                  :class="[
+                    'px-3 py-1.5 rounded-full text-sm font-bold transition-all',
+                    selectedSentenceWordIndex === idx
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : bestScores.has(vocab.id)
+                        ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ]"
+                >
+                  {{ vocab.word?.word }}
+                  <span v-if="bestScores.has(vocab.id)" class="ml-1">✓</span>
+                </button>
+              </div>
+              
+              <!-- 当前造句任务 -->
+              <div v-if="currentVocabulary" class="space-y-4">
+                <div class="p-4 bg-violet-50 rounded-2xl border border-violet-100">
+                  <div class="text-xs font-bold text-violet-500 uppercase tracking-widest mb-2">🎯 题目要求</div>
+                  <div class="text-sm font-bold text-slate-600 mb-1">目标单词:</div>
+                  <div class="text-xl font-black text-violet-700">{{ currentVocabulary.word?.word }}</div>
+                  
+                  <div v-if="currentSentenceTask" class="mt-3">
+                    <div class="text-sm font-bold text-slate-600 mb-1">主题:</div>
+                    <div class="text-base text-slate-700">{{ currentSentenceTask.theme }}</div>
+                    
+                    <div class="mt-3 p-3 bg-white rounded-xl border border-violet-100">
+                      <div class="text-xs text-slate-400 mb-1">参考示例:</div>
+                      <div class="text-sm text-slate-700 italic">{{ currentSentenceTask.chineseExample }}</div>
+                    </div>
+                  </div>
+                  
+                  <!-- 最高分显示 -->
+                  <div v-if="currentBestScore !== null" class="mt-3 flex items-center gap-2">
+                    <span class="text-xs font-bold text-emerald-600">🏆 最高分:</span>
+                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-sm font-black">{{ currentBestScore }}</span>
+                  </div>
+                </div>
+                
+                <!-- 输入区域 -->
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="text-sm font-bold text-slate-500">你的句子:</label>
+                    <span class="text-xs font-bold" :class="remainingAttempts > 1 ? 'text-blue-500' : 'text-red-500'">
+                      剩余机会: {{ remainingAttempts }} / {{ maxAttempts }}
+                    </span>
+                  </div>
+                  <textarea
+                    v-model="userSentence"
+                    rows="3"
+                    class="w-full p-4 text-base rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500/30 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none resize-none"
+                    placeholder="在此输入你的英文句子..."
+                    :disabled="!!feedback && remainingAttempts === 0"
+                  ></textarea>
+                </div>
+                
+                <!-- 提交按钮 -->
+                <button 
+                  v-if="!feedback || remainingAttempts > 0"
+                  :disabled="submittingSentence || remainingAttempts === 0"
+                  class="w-full py-3 rounded-xl bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  @click="feedback ? retryCurrentWord() : submitUserSentence()"
+                >
+                  <span v-if="submittingSentence">AI 批改中...</span>
+                  <span v-else-if="feedback">🔄 重新作答 ({{ remainingAttempts }}次机会)</span>
+                  <span v-else>提交批改</span>
+                </button>
+                
+                <!-- 反馈结果 -->
+                <div v-if="feedback" class="p-4 rounded-2xl border space-y-3" :class="feedback.score >= 80 ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'">
+                  <div class="flex items-center gap-3">
+                    <span class="text-3xl font-black" :class="feedback.score >= 80 ? 'text-emerald-600' : 'text-amber-600'">{{ feedback.score }}</span>
+                    <span class="text-sm font-bold" :class="feedback.isCorrect ? 'text-emerald-600' : 'text-amber-600'">
+                      {{ feedback.isCorrect ? '优秀！' : '继续加油' }}
+                    </span>
+                  </div>
+                  
+                  <div class="space-y-2 text-sm">
+                    <div>
+                      <span class="font-bold text-slate-500">语法:</span>
+                      <span class="text-slate-700 ml-1">{{ feedback.feedback.grammar }}</span>
+                    </div>
+                    <div>
+                      <span class="font-bold text-slate-500">用法:</span>
+                      <span class="text-slate-700 ml-1">{{ feedback.feedback.usage }}</span>
+                    </div>
+                    <div>
+                      <span class="font-bold text-slate-500">建议:</span>
+                      <span class="text-slate-700 ml-1">{{ feedback.feedback.suggestion }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 完成按钮 -->
+              <button 
+                v-if="bestScores.size === vocabularyItems.length"
+                @click="finishLearning"
+                class="w-full mt-6 py-4 rounded-xl bg-emerald-600 text-white font-black text-lg shadow-lg hover:bg-emerald-700 transition-all"
+              >
+                🎉 完成学习
+              </button>
             </div>
           </div>
         </div>
-        
-        <div class="grid gap-8">
-          <div v-for="(val, key) in { 'Grammar': feedback.feedback.grammar, 'Usage': feedback.feedback.usage, 'Suggestion': feedback.feedback.suggestion }" :key="key">
-            <div class="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-2 px-1">{{ key }}</div>
-            <p class="text-slate-600 text-lg font-medium leading-relaxed">{{ val }}</p>
-          </div>
-        </div>
-        
-        <button 
-          class="w-full py-5 rounded-2xl bg-[#0F172A] text-white font-black text-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-3 group"
-          @click="nextSentenceWord"
-        >
-          {{ sentenceWordIndex < vocabularyItems.length - 1 ? '继续下一个' : '查看总结' }}
-          <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-          </svg>
-        </button>
-      </div>
+      </template>
     </div>
 
     <!-- ========== 完成阶段 ========== -->
@@ -551,3 +720,9 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.highlight-word {
+  display: inline;
+}
+</style>

@@ -41,6 +41,22 @@ public class VocabularyService {
         return result;
     }
 
+    public List<Vocabulary> batchAddOrGet(Long userId, List<Long> wordIds) {
+        // 1. 遍历尝试添加（如果不存在）
+        for (Long wordId : wordIds) {
+            if (wordMapper.findById(wordId) != null && !vocabularyMapper.existsByUserIdAndWordId(userId, wordId)) {
+                Vocabulary vocabulary = new Vocabulary();
+                vocabulary.setUserId(userId);
+                vocabulary.setWordId(wordId);
+                vocabulary.setFamiliarity(0);
+                vocabularyMapper.insert(vocabulary);
+            }
+        }
+
+        // 2. 批量获取并返回
+        return vocabularyMapper.findByUserIdAndWordIds(userId, wordIds);
+    }
+
     public List<Vocabulary> getUserVocabulary(Long userId, String status, int page, int pageSize) {
         int offset = (page - 1) * pageSize;
         return vocabularyMapper.findByUserId(userId, status, offset, pageSize);

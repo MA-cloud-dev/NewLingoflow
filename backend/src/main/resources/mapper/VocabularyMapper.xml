@@ -22,6 +22,7 @@
             <result property="meaningEn" column="w_meaning_en"/>
             <result property="exampleSentence" column="w_example_sentence"/>
             <result property="difficulty" column="w_difficulty"/>
+            <result property="levelTags" column="w_level_tags"/>
         </association>
     </resultMap>
     
@@ -29,7 +30,8 @@
         SELECT v.*, 
                w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
                w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
-               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty,
+               w.level_tags as w_level_tags
         FROM vocabulary v
         LEFT JOIN words w ON v.word_id = w.id
         WHERE v.id = #{id}
@@ -39,7 +41,8 @@
         SELECT v.*, 
                w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
                w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
-               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty,
+               w.level_tags as w_level_tags
         FROM vocabulary v
         LEFT JOIN words w ON v.word_id = w.id
         WHERE v.user_id = #{userId} AND v.word_id = #{wordId}
@@ -49,7 +52,8 @@
         SELECT v.*, 
                w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
                w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
-               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty,
+               w.level_tags as w_level_tags
         FROM vocabulary v
         LEFT JOIN words w ON v.word_id = w.id
         WHERE v.user_id = #{userId}
@@ -64,12 +68,28 @@
         SELECT v.*, 
                w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
                w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
-               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty,
+               w.level_tags as w_level_tags
         FROM vocabulary v
         LEFT JOIN words w ON v.word_id = w.id
         WHERE v.id IN
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
+        </foreach>
+    </select>
+
+    <select id="findByUserIdAndWordIds" resultMap="VocabularyResultMap">
+        SELECT v.*, 
+               w.id as w_id, w.word as w_word, w.phonetic as w_phonetic, 
+               w.meaning_cn as w_meaning_cn, w.meaning_en as w_meaning_en,
+               w.example_sentence as w_example_sentence, w.difficulty as w_difficulty,
+               w.level_tags as w_level_tags
+        FROM vocabulary v
+        LEFT JOIN words w ON v.word_id = w.id
+        WHERE v.user_id = #{userId} 
+        AND v.word_id IN
+        <foreach collection="wordIds" item="wid" open="(" separator="," close=")">
+            #{wid}
         </foreach>
     </select>
     

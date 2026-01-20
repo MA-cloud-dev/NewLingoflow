@@ -49,6 +49,22 @@ public class VocabularyController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    @PostMapping("/batch")
+    public ResponseEntity<ApiResponse<List<Vocabulary>>> batchAddVocabulary(
+            @AuthenticationPrincipal User user,
+            @RequestBody Map<String, Object> request) {
+
+        // Jackson 将 JSON 数字反序列化为 Integer，需要显式转换为 Long
+        @SuppressWarnings("unchecked")
+        List<Number> rawIds = (List<Number>) request.get("wordIds");
+        List<Long> wordIds = rawIds.stream()
+                .map(Number::longValue)
+                .toList();
+
+        List<Vocabulary> result = vocabularyService.batchAddOrGet(user.getId(), wordIds);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> removeFromVocabulary(
             @AuthenticationPrincipal User user,

@@ -37,4 +37,22 @@
             question_data = #{questionData}
         WHERE id = #{id}
     </update>
+    
+    <!-- 查询用户对某个单词的造句记录（仅限action_type='sentence'），用于只保留最高分逻辑 -->
+    <select id="findSentenceByUserIdAndWordId" resultMap="SessionWordResultMap">
+        SELECT sw.* 
+        FROM session_words sw
+        JOIN learning_sessions ls ON sw.session_id = ls.id
+        JOIN vocabulary v ON sw.vocabulary_id = v.id
+        WHERE ls.user_id = #{userId} 
+          AND v.word_id = #{wordId}
+          AND sw.action_type = 'sentence'
+          AND sw.user_sentence IS NOT NULL
+        ORDER BY sw.score DESC, sw.created_at DESC
+        LIMIT 1
+    </select>
+    
+    <delete id="deleteById">
+        DELETE FROM session_words WHERE id = #{id}
+    </delete>
 </mapper>

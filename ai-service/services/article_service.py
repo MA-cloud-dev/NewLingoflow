@@ -57,6 +57,7 @@ Output JSON Format:
 {{
     "title": "Article Title",
     "content": "Article content with **highlighted** target words...",
+    "chineseTranslation": "Full Chinese translation of the article...",
     "highlightWords": ["{word_list}"],
     "comprehensionQuestions": [
         {{

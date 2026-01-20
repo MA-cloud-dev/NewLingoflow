@@ -9,6 +9,7 @@ export interface Word {
     meaningEn: string
     exampleSentence: string
     difficulty: string
+    levelTags?: string  // 词库级别标签，如 "CET-4,CET-6"
 }
 
 export interface VocabularyItem {
@@ -17,6 +18,8 @@ export interface VocabularyItem {
     wordId: number
     familiarity: number
     reviewCount: number
+    nextReviewDate?: string
+    lastReviewDate?: string
     word: Word
 }
 
@@ -38,6 +41,7 @@ export interface SentenceTask {
 export interface ArticleData {
     title: string
     content: string
+    chineseTranslation?: string
     highlightWords: string[]
     comprehensionQuestions?: ComprehensionQuestion[]
     sentenceMakingTasks?: SentenceTask[]
@@ -74,6 +78,11 @@ export function getUserVocabulary(status: string = 'all', page: number = 1, page
 // 添加单词到生词本
 export function addToVocabulary(wordId: number): Promise<ApiResponse<{ vocabularyId: number }>> {
     return request.post('/vocabulary', { wordId })
+}
+
+// 批量添加单词到生词本并获取详情
+export function batchAddToVocabulary(wordIds: number[]): Promise<ApiResponse<VocabularyItem[]>> {
+    return request.post('/vocabulary/batch', { wordIds })
 }
 
 // 从生词本删除
