@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LingoFlow - Style D: Editor's Focus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background-color: #F9F9F7;
+            /* Warm paper tone */
+            color: #2D2A26;
+        }
+
+        h1,
+        h2,
+        h3,
+        .serif-font {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .paper-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E5E5E0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+            transition: all 0.3s ease;
+        }
+
+        .paper-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+            border-color: #D4D4D0;
+            transform: translateY(-2px);
+        }
+
+        .nav-item.active {
+            color: #0F172A;
+            background-color: #E2E2DF;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col md:flex-row">
+
+    <!-- Sidebar / Navigation -->
+    <aside
+        class="w-full md:w-20 lg:w-72 bg-[#1C1C1E] text-[#F9F9F7] flex-shrink-0 flex flex-col justify-between py-6 px-4">
+        <div>
+            <div class="flex items-center gap-3 mb-10 px-2 mt-2">
+                <div
+                    class="w-8 h-8 bg-[#F9F9F7] text-[#1C1C1E] rounded-full flex items-center justify-center font-bold font-serif italic">
+                    L</div>
+                <span class="text-xl font-serif tracking-wide hidden lg:inline">LingoFlow</span>
+            </div>
+
+            <nav class="space-y-2">
+                <a href="#"
+                    class="flex items-center gap-4 px-4 py-3 bg-[#333335] rounded-md text-[#F9F9F7] transition-colors">
+                    <i data-lucide="layout" class="w-5 h-5 opacity-90"></i>
+                    <span class="font-medium hidden lg:inline">Overview</span>
+                </a>
+                <a href="#"
+                    class="flex items-center gap-4 px-4 py-3 text-[#A1A1AA] hover:text-[#F9F9F7] hover:bg-[#333335] rounded-md transition-colors">
+                    <i data-lucide="library" class="w-5 h-5 opacity-70"></i>
+                    <span class="font-medium hidden lg:inline">Library</span>
+                </a>
+                <a href="#"
+                    class="flex items-center gap-4 px-4 py-3 text-[#A1A1AA] hover:text-[#F9F9F7] hover:bg-[#333335] rounded-md transition-colors">
+                    <i data-lucide="pen-tool" class="w-5 h-5 opacity-70"></i>
+                    <span class="font-medium hidden lg:inline">Daily Practice</span>
+                </a>
+                <a href="#"
+                    class="flex items-center gap-4 px-4 py-3 text-[#A1A1AA] hover:text-[#F9F9F7] hover:bg-[#333335] rounded-md transition-colors">
+                    <i data-lucide="history" class="w-5 h-5 opacity-70"></i>
+                    <span class="font-medium hidden lg:inline">History</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="px-2 hidden lg:block">
+            <div class="text-xs uppercase tracking-widest text-[#A1A1AA] mb-4">Daily Goal</div>
+            <div class="flex items-center justify-between text-sm mb-2">
+                <span>Reading</span>
+                <span class="text-[#F9F9F7]">12/20 min</span>
+            </div>
+            <div class="w-full bg-[#333335] h-1 rounded-full mb-6">
+                <div class="bg-[#F9F9F7] h-1 rounded-full w-[60%]"></div>
+            </div>
+
+            <button
+                class="flex items-center gap-3 w-full p-2 rounded-md hover:bg-[#333335] transition-colors text-left group">
+                <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
+                    class="w-8 h-8 rounded-full bg-[#E2E2DF]" />
+                <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate group-hover:text-white transition-colors">Felix Wong</div>
+                    <div class="text-xs text-[#A1A1AA]">Pro Member</div>
+                </div>
+                <i data-lucide="more-horizontal" class="w-4 h-4 text-[#A1A1AA]"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 px-6 md:px-12 py-10 overflow-y-auto max-w-6xl mx-auto w-full">
+
+        <!-- Header -->
+        <header class="flex justify-between items-baseline border-b border-[#E5E5E0] pb-6 mb-10">
+            <div>
+                <p class="text-sm text-slate-500 uppercase tracking-widest font-bold mb-2">Wednesday, Jan 24</p>
+                <h1 class="text-4xl md:text-5xl text-[#1C1C1E] italic font-serif">Morning Briefing</h1>
+            </div>
+            <div class="flex gap-4">
+                <button
+                    class="w-10 h-10 rounded-full border border-[#E5E5E0] flex items-center justify-center hover:bg-[#E2E2DF] transition-colors cursor-pointer">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-600"></i>
+                </button>
+                <button
+                    class="w-10 h-10 rounded-full border border-[#E5E5E0] flex items-center justify-center hover:bg-[#E2E2DF] transition-colors cursor-pointer relative">
+                    <i data-lucide="bell" class="w-4 h-4 text-slate-600"></i>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Featured Article (Reading Based) -->
+        <section class="mb-16">
+            <div
+                class="paper-card p-0 rounded-none md:rounded-lg overflow-hidden flex flex-col md:flex-row group cursor-pointer">
+                <div class="w-full md:w-2/5 h-64 md:h-auto overflow-hidden relative">
+                    <img src="https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?q=80&w=1000&auto=format&fit=crop"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 grayscale group-hover:grayscale-0"
+                        alt="Learning">
+                    <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                </div>
+                <div class="w-full md:w-3/5 p-8 md:p-12 flex flex-col justify-center">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span
+                            class="px-2 py-1 border border-[#1C1C1E] text-[#1C1C1E] text-xs font-bold uppercase tracking-wider">Technology</span>
+                        <span class="text-slate-400 text-xs font-medium">5 min read</span>
+                    </div>
+                    <h2
+                        class="text-3xl font-serif text-[#1C1C1E] mb-4 leading-tight group-hover:underline decoration-1 underline-offset-4">
+                        The Future of AI in Language Acquisition</h2>
+                    <p class="text-slate-600 mb-8 leading-relaxed font-light text-lg">
+                        Explore how neural networks are reshaping the way we understand context, nuance, and cultural
+                        subtleties in new languages.
+                    </p>
+                    <div
+                        class="flex items-center gap-2 text-[#1C1C1E] font-medium text-sm group-hover:translate-x-1 transition-transform">
+                        Read Article <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats & Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <div class="paper-card p-6 md:rounded-lg border-t-4 border-t-[#1C1C1E]">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="font-serif text-xl italic">Vocabulary</h3>
+                    <i data-lucide="book-open" class="w-5 h-5 text-slate-400"></i>
+                </div>
+                <div class="text-4xl font-light text-[#1C1C1E] mb-1">24<span
+                        class="text-lg text-slate-400 font-normal ml-1">new words</span></div>
+                <p class="text-sm text-slate-500 mb-6">Pending review from yesterday's session.</p>
+                <button
+                    class="w-full py-2 border border-[#E5E5E0] hover:border-[#1C1C1E] hover:bg-[#F9F9F7] transition-all text-sm font-medium">Review
+                    Now</button>
+            </div>
+
+            <div class="paper-card p-6 md:rounded-lg border-t-4 border-t-[#D4B483]">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="font-serif text-xl italic">Performance</h3>
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-slate-400"></i>
+                </div>
+                <div class="text-4xl font-light text-[#1C1C1E] mb-1">92%<span
+                        class="text-lg text-slate-400 font-normal ml-1">accuracy</span></div>
+                <p class="text-sm text-slate-500 mb-6">You're performing better than 80% of peers.</p>
+                <button
+                    class="w-full py-2 border border-[#E5E5E0] hover:border-[#D4B483] hover:bg-[#F9F9F7] transition-all text-sm font-medium text-[#D4B483] hover:text-[#BFA175]">View
+                    Analytics</button>
+            </div>
+
+            <div
+                class="paper-card p-6 md:rounded-lg border-t-4 border-t-slate-400 flex flex-col justify-center items-center text-center cursor-pointer group hover:bg-[#1C1C1E] transition-colors">
+                <div
+                    class="w-12 h-12 bg-[#F2F2F0] rounded-full flex items-center justify-center mb-4 group-hover:bg-[#333335] transition-colors">
+                    <i data-lucide="plus" class="w-6 h-6 text-[#1C1C1E] group-hover:text-white"></i>
+                </div>
+                <h3 class="font-serif text-xl italic mb-1 group-hover:text-white">New Session</h3>
+                <p class="text-sm text-slate-500 group-hover:text-slate-400">Start a custom learning flow based on your
+                    interests.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

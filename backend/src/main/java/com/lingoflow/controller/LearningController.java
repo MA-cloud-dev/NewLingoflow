@@ -2,7 +2,6 @@ package com.lingoflow.controller;
 
 import com.lingoflow.dto.ApiResponse;
 import com.lingoflow.entity.User;
-import com.lingoflow.entity.Word;
 import com.lingoflow.service.LearningService;
 import com.lingoflow.service.WordService;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +27,24 @@ public class LearningController {
             @RequestParam(defaultValue = "10") int count,
             @RequestParam(required = false) String difficulty) {
 
-        List<Word> words = wordService.getWordsForLearning(user.getId(), difficulty, count);
+        com.lingoflow.dto.LearningStateDto state = wordService.getWordsForLearning(user.getId(), difficulty, count);
 
         Map<String, Object> data = new HashMap<>();
-        data.put("words", words);
-        data.put("total", words.size());
+        data.put("words", state.getWords());
+        data.put("total", state.getWords().size());
+        data.put("currentIndex", state.getCurrentIndex());
+        data.put("selectedWords", state.getSelectedWords());
 
         return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    @PostMapping("/progress")
+    public ResponseEntity<ApiResponse<Void>> updateProgress(
+            @AuthenticationPrincipal User user,
+            @RequestBody com.lingoflow.dto.LearningStateDto progress) {
+
+        wordService.updateLearningProgress(user.getId(), progress.getCurrentIndex(), progress.getSelectedWords());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PostMapping("/article")

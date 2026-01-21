@@ -58,6 +58,7 @@ public class StatsController {
 
     /**
      * 获取周学习数据 (过去7天)
+     * 返回每天的学习数量和复习数量
      */
     @GetMapping("/weekly")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getWeeklyStats(
@@ -71,13 +72,20 @@ public class StatsController {
         for (int i = 6; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
 
-            Integer count = jdbcTemplate.queryForObject(
+            // 学习数量：当天新增的单词
+            Integer learnCount = jdbcTemplate.queryForObject(
                     "SELECT COUNT(*) FROM vocabulary WHERE user_id = ? AND DATE(created_at) = ?",
+                    Integer.class, userId, date);
+
+            // 复习数量：当天的复习记录数
+            Integer reviewCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM review_records WHERE user_id = ? AND DATE(reviewed_at) = ?",
                     Integer.class, userId, date);
 
             Map<String, Object> dayData = new HashMap<>();
             dayData.put("date", date.format(formatter));
-            dayData.put("count", count != null ? count : 0);
+            dayData.put("count", learnCount != null ? learnCount : 0);
+            dayData.put("reviewCount", reviewCount != null ? reviewCount : 0);
             weeklyData.add(dayData);
         }
 

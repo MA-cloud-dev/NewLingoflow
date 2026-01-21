@@ -58,10 +58,15 @@ export interface SentenceFeedback {
 }
 
 // 获取学习单词
-export function getLearningWords(count: number = 10, difficulty?: string): Promise<ApiResponse<{ words: Word[], total: number }>> {
+export function getLearningWords(count: number = 10, difficulty?: string): Promise<ApiResponse<{ words: Word[], total: number, currentIndex?: number, selectedWords?: Word[] }>> {
     const params = new URLSearchParams({ count: count.toString() })
     if (difficulty) params.append('difficulty', difficulty)
     return request.get(`/learning/words?${params}`)
+}
+
+// 更新学习进度
+export function updateLearningProgress(currentIndex: number, selectedWords: Word[]): Promise<ApiResponse<null>> {
+    return request.post('/learning/progress', { currentIndex, selectedWords })
 }
 
 // 获取所有单词
@@ -139,7 +144,7 @@ export function getReviewQueue(): Promise<ApiResponse<{ words: ReviewWord[], tot
 }
 
 // 提交熟悉度自评
-export function submitRating(vocabularyId: number, rating: 'known' | 'unknown'): Promise<ApiResponse<RatingResult>> {
+export function submitRating(vocabularyId: number, rating: 'known' | 'unknown' | 'fuzzy'): Promise<ApiResponse<RatingResult>> {
     return request.post('/review/rating', { vocabularyId, rating })
 }
 

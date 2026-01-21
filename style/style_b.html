@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LingoFlow - Style B: Clean Slate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar-link.active {
+            background-color: #F8FAFC;
+            color: #0F172A;
+            border-right: 3px solid #0F172A;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-slate-900 min-h-screen flex">
+
+    <!-- Sidebar -->
+    <aside
+        class="w-20 lg:w-64 border-r border-slate-100 flex-shrink-0 fixed h-screen bg-white z-20 transition-all duration-300">
+        <div class="h-20 flex items-center justify-center lg:justify-start lg:px-8 border-b border-slate-50">
+            <div
+                class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white font-bold mr-0 lg:mr-3">
+                LF</div>
+            <span class="font-bold text-lg hidden lg:block tracking-tight">LingoFlow</span>
+        </div>
+
+        <div class="py-8 flex flex-col gap-2">
+            <a href="#"
+                class="sidebar-link active flex items-center px-4 lg:px-8 py-3 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                <i data-lucide="layout-grid" class="w-5 h-5 mr-0 lg:mr-3"></i>
+                <span class="hidden lg:block font-medium text-sm">Dashboard</span>
+            </a>
+            <a href="#"
+                class="sidebar-link flex items-center px-4 lg:px-8 py-3 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                <i data-lucide="book" class="w-5 h-5 mr-0 lg:mr-3"></i>
+                <span class="hidden lg:block font-medium text-sm">Lessons</span>
+            </a>
+            <a href="#"
+                class="sidebar-link flex items-center px-4 lg:px-8 py-3 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                <i data-lucide="rotate-ccw" class="w-5 h-5 mr-0 lg:mr-3"></i>
+                <span class="hidden lg:block font-medium text-sm">Review</span>
+            </a>
+            <a href="#"
+                class="sidebar-link flex items-center px-4 lg:px-8 py-3 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                <i data-lucide="pie-chart" class="w-5 h-5 mr-0 lg:mr-3"></i>
+                <span class="hidden lg:block font-medium text-sm">Analytics</span>
+            </a>
+        </div>
+
+        <div class="absolute bottom-8 left-0 w-full px-4 lg:px-8">
+            <div
+                class="hidden lg:flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 cursor-pointer hover:border-slate-200 transition-colors">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                    class="w-9 h-9 rounded-full bg-white border border-slate-200" alt="Profile">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold truncate">Felix Wong</p>
+                    <p class="text-xs text-slate-400 truncate">Free Plan</p>
+                </div>
+            </div>
+            <!-- Mobile/Collapsed Profile Icon -->
+            <div class="lg:hidden flex justify-center">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                    class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 cursor-pointer" alt="Profile">
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-20 lg:ml-64 p-8 lg:p-12">
+
+        <header class="flex justify-between items-end mb-12">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 mb-2">Welcome back, Felix 👋</h1>
+                <p class="text-slate-500">You have 12 words to review today.</p>
+            </div>
+            <button
+                class="bg-slate-900 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200 cursor-pointer flex items-center gap-2">
+                <i data-lucide="play" class="w-4 h-4 fill-current"></i> Start Session
+            </button>
+        </header>
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div
+                class="p-6 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-colors cursor-pointer">
+                <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Daily Streak</div>
+                <div class="flex items-end gap-2">
+                    <span class="text-4xl font-bold text-slate-900">12</span>
+                    <span class="text-emerald-500 text-sm font-medium mb-1">days</span>
+                </div>
+            </div>
+            <div
+                class="p-6 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-colors cursor-pointer">
+                <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Words Learned</div>
+                <div class="flex items-end gap-2">
+                    <span class="text-4xl font-bold text-slate-900">482</span>
+                    <span class="text-slate-500 text-sm font-medium mb-1">total</span>
+                </div>
+            </div>
+            <div
+                class="p-6 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-colors cursor-pointer">
+                <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Accuracy</div>
+                <div class="flex items-end gap-2">
+                    <span class="text-4xl font-bold text-slate-900">94</span>
+                    <span class="text-slate-500 text-sm font-medium mb-1">%</span>
+                </div>
+            </div>
+            <div
+                class="p-6 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-colors cursor-pointer flex items-center justify-center bg-slate-50 border-dashed">
+                <div class="text-slate-400 text-sm font-medium flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add Goal
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: Recommended -->
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-xl font-bold text-slate-900">Recommended for you</h2>
+            <a href="#" class="text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1">View all
+                <i data-lucide="chevron-right" class="w-4 h-4"></i></a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Course Card 1 -->
+            <div class="group cursor-pointer">
+                <div class="aspect-video bg-slate-100 rounded-xl mb-4 overflow-hidden relative">
+                    <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?q=80&w=800&auto=format&fit=crop"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter grayscale group-hover:grayscale-0 opacity-80 group-hover:opacity-100"
+                        alt="Class">
+                    <div
+                        class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-slate-900">
+                        Intermediate</div>
+                </div>
+                <h3 class="font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">Business
+                    Communication</h3>
+                <p class="text-sm text-slate-500">Learn to write emails and negotiate.</p>
+            </div>
+
+            <!-- Course Card 2 -->
+            <div class="group cursor-pointer">
+                <div class="aspect-video bg-slate-100 rounded-xl mb-4 overflow-hidden relative">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter grayscale group-hover:grayscale-0 opacity-80 group-hover:opacity-100"
+                        alt="Class">
+                    <div
+                        class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-slate-900">
+                        Beginner</div>
+                </div>
+                <h3 class="font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">Travel Essentials
+                </h3>
+                <p class="text-sm text-slate-500">Airports, hotels, and asking for directions.</p>
+            </div>
+
+            <!-- Course Card 3 -->
+            <div class="group cursor-pointer">
+                <div class="aspect-video bg-slate-100 rounded-xl mb-4 overflow-hidden relative">
+                    <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop"
+                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter grayscale group-hover:grayscale-0 opacity-80 group-hover:opacity-100"
+                        alt="Class">
+                    <div
+                        class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold text-slate-900">
+                        Advanced</div>
+                </div>
+                <h3 class="font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">Academic Writing
+                </h3>
+                <p class="text-sm text-slate-500">Structure essays and cite sources.</p>
+            </div>
+        </div>
+
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

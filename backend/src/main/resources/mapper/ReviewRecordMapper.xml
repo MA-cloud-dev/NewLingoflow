@@ -6,10 +6,10 @@
         <id property="id" column="id"/>
         <result property="userId" column="user_id"/>
         <result property="vocabularyId" column="vocabulary_id"/>
-        <result property="rating" column="rating"/>
-        <result property="testPassed" column="test_passed"/>
+        <result property="rating" column="familiarity_rating"/>
+        <result property="testPassed" column="is_correct"/>
         <result property="responseTimeMs" column="response_time_ms"/>
-        <result property="createdAt" column="created_at"/>
+        <result property="createdAt" column="reviewed_at"/>
     </resultMap>
     
     <select id="findById" resultMap="ReviewRecordResultMap">
@@ -19,18 +19,18 @@
     <select id="findByUserIdAndVocabularyId" resultMap="ReviewRecordResultMap">
         SELECT * FROM review_records 
         WHERE user_id = #{userId} AND vocabulary_id = #{vocabularyId}
-        ORDER BY created_at DESC
+        ORDER BY reviewed_at DESC
     </select>
     
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO review_records (user_id, vocabulary_id, rating, test_passed, response_time_ms, created_at)
+        INSERT INTO review_records (user_id, vocabulary_id, familiarity_rating, is_correct, response_time_ms, reviewed_at)
         VALUES (#{userId}, #{vocabularyId}, #{rating}, #{testPassed}, #{responseTimeMs}, NOW())
     </insert>
     
     <update id="update">
         UPDATE review_records SET
-            rating = #{rating},
-            test_passed = #{testPassed},
+            familiarity_rating = #{rating},
+            is_correct = #{testPassed},
             response_time_ms = #{responseTimeMs}
         WHERE id = #{id}
     </update>

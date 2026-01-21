@@ -22,11 +22,26 @@ public class ReviewService {
     private final VocabularyMapper vocabularyMapper;
     private final WordMapper wordMapper;
     private final ReviewRecordMapper reviewRecordMapper;
+    private final org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     /**
      * 获取今日待复习队列
      */
     public Map<String, Object> getReviewQueue(Long userId) {
+        String key = "review:queue:" + userId + ":" + java.time.LocalDate.now();
+        String cachedValue = redisTemplate.opsForValue().get(key);
+
+        if (cachedValue != null) {
+            try {
+                return objectMapper.readValue(cachedValue,
+                        new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {
+                        });
+            } catch (Exception e) {
+                // Ignore cache error
+            }
+        }
+
         List<Vocabulary> vocabulary = vocabularyMapper.findByUserId(userId, "review", 0, 100);
 
         List<Map<String, Object>> words = new ArrayList<>();
@@ -46,6 +61,17 @@ public class ReviewService {
         Map<String, Object> result = new HashMap<>();
         result.put("words", words);
         result.put("total", words.size());
+
+        if (!words.isEmpty()) {
+            try {
+                // Cache for 24 hours, but we will invalidate on update
+                redisTemplate.opsForValue().set(key, objectMapper.writeValueAsString(result),
+                        java.time.Duration.ofHours(24));
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+
         return result;
     }
 
@@ -76,11 +102,22 @@ public class ReviewService {
             result.put("needTest", false);
             result.put("correctAnswer", vocabulary.getWord().getMeaningCn());
             result.put("word", vocabulary.getWord().getWord());
+        } else if ("fuzzy".equals(rating)) {
+            // 模糊：直接显示答案，SM-2 按 quality=1 处理
+            applySM2(vocabulary, 1);
+
+            result.put("needTest", false);
+            result.put("correctAnswer", vocabulary.getWord().getMeaningCn());
+            result.put("word", vocabulary.getWord().getWord());
         } else {
             // 认识：返回四选一题目
             result.put("needTest", true);
             result.put("testQuestion", generateTestQuestion(vocabulary));
         }
+
+        // Invalidate cache
+        String key = "review:queue:" + userId + ":" + java.time.LocalDate.now();
+        redisTemplate.delete(key);
 
         return result;
     }
@@ -125,6 +162,12 @@ public class ReviewService {
             record.setTestPassed(isCorrect);
             record.setResponseTimeMs(responseTimeMs);
             reviewRecordMapper.update(record);
+        }
+
+        // Invalidate cache if review status changed (SM-2 applied)
+        if (!isFromErrorQueue) {
+            String key = "review:queue:" + userId + ":" + java.time.LocalDate.now();
+            redisTemplate.delete(key);
         }
 
         return result;

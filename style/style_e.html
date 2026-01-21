@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LingoFlow - Style E: Brutal Grid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #f1f0ee;
+        }
+
+        .b-card {
+            background: #fff;
+            border: 2px solid #000;
+            box-shadow: 4px 4px 0px #000;
+            transition: all 0.1s ease;
+        }
+
+        .b-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #000;
+        }
+
+        .b-card:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        .b-btn {
+            background: #D9F99D;
+            border: 2px solid #000;
+            box-shadow: 3px 3px 0px #000;
+            font-weight: 700;
+            transition: all 0.1s ease;
+        }
+
+        .b-btn:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 4px 4px 0px #000;
+        }
+
+        .b-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        /* Grid background pattern */
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, #ccc 1px, transparent 1px),
+                linear-gradient(to bottom, #ccc 1px, transparent 1px);
+        }
+    </style>
+</head>
+
+<body class="bg-grid min-h-screen p-4 md:p-8 text-black">
+
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-12">
+            <div class="flex items-center gap-4 bg-white border-2 border-black p-4 shadow-[4px_4px_0_#000]">
+                <div class="w-10 h-10 bg-black text-white flex items-center justify-center font-bold text-xl">LF</div>
+                <h1 class="text-2xl font-bold uppercase tracking-tight">LingoFlow <span
+                        class="text-xs bg-yellow-300 border border-black px-1 mx-1">PRO</span></h1>
+            </div>
+
+            <nav class="flex flex-wrap gap-4">
+                <a href="#" class="b-btn bg-white px-6 py-3 uppercase text-sm">Dashboard</a>
+                <a href="#" class="b-btn bg-white px-6 py-3 uppercase text-sm">Dictionary</a>
+                <a href="#" class="b-btn px-6 py-3 uppercase text-sm flex items-center gap-2">
+                    Start Learning <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </nav>
+        </header>
+
+        <!-- Main Grid Layout -->
+        <div class="grid grid-cols-12 gap-6">
+
+            <!-- Left Column: User & Stats -->
+            <div class="col-span-12 md:col-span-4 lg:col-span-3 space-y-6">
+                <!-- User Profile -->
+                <div class="b-card p-6 flex flex-col items-center text-center">
+                    <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix"
+                        class="w-24 h-24 border-2 border-black rounded-full mb-4 bg-purple-200" alt="Felix">
+                    <h2 class="text-xl font-bold">Felix Wong</h2>
+                    <p class="text-sm font-bold text-gray-500 mb-4">Code Lover • English Learner</p>
+                    <div class="w-full bg-gray-200 h-4 border-2 border-black relative mb-1">
+                        <div class="absolute top-0 left-0 bottom-0 bg-blue-400 w-[70%] border-r-2 border-black"></div>
+                    </div>
+                    <div class="flex justify-between w-full text-xs font-bold font-mono">
+                        <span>LVL 4</span>
+                        <span>700/1000 XP</span>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="b-card bg-orange-200 p-0">
+                    <div class="border-b-2 border-black p-3 font-bold uppercase text-xs">Streak</div>
+                    <div class="p-6 text-center">
+                        <div class="text-6xl font-bold mb-2">12</div>
+                        <div class="font-mono text-sm uppercase">Days on fire</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Column: Main Feed -->
+            <div class="col-span-12 md:col-span-8 lg:col-span-6 space-y-6">
+
+                <!-- Today's Mission -->
+                <div class="b-card p-0 relative overflow-hidden">
+                    <div class="bg-black text-white p-3 font-bold uppercase flex justify-between items-center">
+                        <span>Today's Mission</span>
+                        <i data-lucide="crosshair" class="w-5 h-5"></i>
+                    </div>
+                    <div class="p-8">
+                        <h3 class="text-3xl font-bold mb-4 leading-none">Master the <span
+                                class="bg-blue-300 px-1 border border-black inline-block transform -rotate-1">Art of
+                                Subjunctive</span></h3>
+                        <p class="font-medium text-lg border-l-4 border-black pl-4 mb-8">
+                            "If I were you, I would click this button immediately."
+                        </p>
+                        <ul class="space-y-3 mb-8 font-mono text-sm">
+                            <li class="flex gap-3 items-center">
+                                <div
+                                    class="w-5 h-5 border-2 border-black bg-green-400 flex items-center justify-center">
+                                    <i data-lucide="check" class="w-3 h-3"></i></div>
+                                <span>Learn grammar rule</span>
+                            </li>
+                            <li class="flex gap-3 items-center">
+                                <div class="w-5 h-5 border-2 border-black bg-white"></div>
+                                <span>Practice 5 sentences</span>
+                            </li>
+                            <li class="flex gap-3 items-center">
+                                <div class="w-5 h-5 border-2 border-black bg-white"></div>
+                                <span>Read short story</span>
+                            </li>
+                        </ul>
+                        <button
+                            class="w-full b-btn bg-black text-white text-lg py-4 hover:bg-gray-900 shadow-[4px_4px_0_#888] hover:shadow-[6px_6px_0_#888]">
+                            CONTINUE LESSON
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Word of the day -->
+                <div class="b-card bg-pink-100 p-6 flex items-start gap-4">
+                    <div class="bg-white border-2 border-black p-3 shadow-[3px_3px_0_#000]">
+                        <i data-lucide="quote" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold uppercase mb-1 text-pink-600">Daily Vocabulary</div>
+                        <h3 class="text-2xl font-bold mb-1">Serendipity</h3>
+                        <p class="font-mono text-sm italic mb-2">noun • /ˌser.ənˈdɪp.ə.ti/</p>
+                        <p class="font-medium text-sm">The occurrence and development of events by chance in a happy or
+                            beneficial way.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Leaderboard/Extras -->
+            <div class="col-span-12 lg:col-span-3 space-y-6">
+                <div class="b-card p-0">
+                    <div class="bg-yellow-300 border-b-2 border-black p-3 font-bold uppercase text-center">Top Learners
+                    </div>
+                    <div class="divide-y-2 divide-black">
+                        <div class="p-3 flex items-center gap-3 bg-white">
+                            <span class="font-mono font-bold text-xl">01</span>
+                            <div class="w-8 h-8 rounded-full bg-blue-200 border border-black"></div>
+                            <span class="font-bold text-sm">Sarah J.</span>
+                            <span class="ml-auto font-mono text-xs">1200XP</span>
+                        </div>
+                        <div class="p-3 flex items-center gap-3 bg-green-100">
+                            <span class="font-mono font-bold text-xl">02</span>
+                            <div class="w-8 h-8 rounded-full bg-red-200 border border-black"></div>
+                            <span class="font-bold text-sm">You</span>
+                            <span class="ml-auto font-mono text-xs">700XP</span>
+                        </div>
+                        <div class="p-3 flex items-center gap-3 bg-white">
+                            <span class="font-mono font-bold text-xl">03</span>
+                            <div class="w-8 h-8 rounded-full bg-yellow-200 border border-black"></div>
+                            <span class="font-bold text-sm">Mike T.</span>
+                            <span class="ml-auto font-mono text-xs">650XP</span>
+                        </div>
+                    </div>
+                    <div
+                        class="p-3 border-t-2 border-black text-center text-xs font-bold cursor-pointer hover:bg-gray-100">
+                        VIEW ALL LEADERBOARD
+                    </div>
+                </div>
+
+                <!-- Ad / Promo Placeholder style -->
+                <div class="b-card bg-blue-500 text-white p-6 border-2 border-black text-center">
+                    <div class="text-4xl font-bold mb-2">PRO</div>
+                    <p class="text-sm font-bold mb-4">Get unlimited AI corrections.</p>
+                    <button
+                        class="bg-white text-black border-2 border-black w-full py-2 font-bold hover:bg-gray-100 shadow-[3px_3px_0_#000] active:shadow-[1px_1px_0_#000] active:translate-y-1 active:translate-x-1 transition-all">
+                        UPGRADE
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

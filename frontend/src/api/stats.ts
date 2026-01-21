@@ -11,7 +11,8 @@ export interface StatsOverview {
 
 export interface WeeklyData {
     date: string
-    count: number
+    count: number        // 学习数量
+    reviewCount: number  // 复习数量
 }
 
 // 获取学习统计概览

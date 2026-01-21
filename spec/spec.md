@@ -164,6 +164,8 @@ lingoflow/
 | 2026-01-18 16:09 | to-spec | Phase 2-3 完成同步：标记学习模块和复习系统完成，更新 review_records 表定义，添加 isFromErrorQueue 参数 |
 | 2026-01-18 18:10 | to-spec | Phase 4 完成同步：标记用户体验优化完成（统计仪表盘、周学习曲线、Premium UI/UX、MainLayout持久化导航、错误处理），添加 layouts/ 目录到项目结构，更新统计 API 定义 |
 | 2026-01-20 00:27 | to-spec | Phase 6-8 完成同步：标记词典系统、学习定制、阅读理解完成；补全 LearningSession/SessionWord 实体字段和 MyBatis 映射；更新 word_dictionary_tags 表定义添加 created_at 字段 |
+| 2026-01-21 15:48 | to-spec | Phase 9 完成同步：Redis缓存集成完成；实现学习进度持久化（LearningStateDto）和复习队列缓存（SM-2）；更新 requirement.md 和 design.md |
+| 2026-01-21 18:12 | to-spec | Phase 10 完成同步：UI/UX重构(Style D)；添加User/Stats API定义；更新学习模块灵活选词逻辑（不再强制5个单词） |
 
 ---
 
@@ -213,4 +215,44 @@ lingoflow/
   - [x] ComprehensionQuiz.vue - 阅读理解选择题组件
   - [x] SentenceMaking.vue 改进 - 显示主题、中文例句，隐藏释义
 - [x] 集成测试：阅读理解答题和改进造句流程 (Ref: requirement.md#UM-11, UM-12)
+
+---
+
+## Phase 9: Redis 缓存集成 (Redis Integration) ✅
+
+**目标**: 引入 Redis 缓存层，优化学习状态持久化和复习队列查询性能
+
+- [x] 基础设施配置
+  - [x] 依赖管理: spring-boot-starter-data-redis
+  - [x] Redis 连接配置: application.yml
+- [x] 学习模块缓存 (Learning Module Caching)
+  - [x] Redis Key: `learning:selection:{userId}` (TTL: 1h)
+  - [x] 状态持久化: 缓存 LearningStateDto (包含 words, currentIndex, selectedWords)
+  - [x] 进度同步: 实现 `updateLearningProgress` 接口
+- [x] 复习模块缓存 (Review Module Caching)
+  - [x] Redis Key: `review:queue:{userId}:{date}` (TTL: 24h)
+  - [x] 缓存策略: 读时缓存 (Read-Through)，提交时失效 (Invalidate on Submit)
+- [x] 验证: 学习流程刷新页面状态保持，复习队列缓存失效逻辑验证 (Ref: requirement.md#UM-03)
+
+---
+
+## Phase 10: UI/UX 重构 (Style D - Editor's Focus) ✅
+
+**目标**: 实现统一的 "Editor's Focus" 设计风格，提升用户体验
+
+- [x] 设计系统基础
+  - [x] 配色方案: Paper (#F9F9F7), Ink (#1C1C1E), Gold (#D4B483)
+  - [x] 字体: Playfair Display (serif), Source Sans 3 (sans-serif)
+  - [x] 组件: .paper-card 统一卡片风格
+- [x] 视图重构
+  - [x] ProfileView.vue - Academic Record 风格
+  - [x] LoginView.vue / RegisterView.vue - Editorial 登录风格
+  - [x] HomeView.vue - Morning Briefing 风格
+  - [x] LearnView.vue - Reading Room 风格
+  - [x] ReviewView.vue - Flashcard 风格
+  - [x] VocabularyView.vue - Academic List 风格
+- [x] 布局优化
+  - [x] MainLayout.vue - 深色侧边栏，用户头像可点击导航
+- [x] 功能修复
+  - [x] 学习模块灵活选词：不再强制要求5个单词，浏览完可选单词后即可进入学习阶段
 

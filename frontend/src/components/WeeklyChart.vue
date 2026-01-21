@@ -4,10 +4,10 @@ import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { BarChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent, TitleComponent } from 'echarts/components'
+import { GridComponent, TooltipComponent, TitleComponent, LegendComponent } from 'echarts/components'
 import type { WeeklyData } from '@/api/stats'
 
-use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, TitleComponent])
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent, TitleComponent, LegendComponent])
 
 const props = defineProps<{
   data: WeeklyData[]
@@ -28,12 +28,29 @@ function updateChart() {
     },
     tooltip: {
       trigger: 'axis',
-      formatter: '{b}: {c} 词'
+      axisPointer: { type: 'shadow' },
+      formatter: function (params: any[]) {
+        let result = `<div style="font-weight:600;margin-bottom:4px">${params[0].axisValue}</div>`
+        params.forEach((item: any) => {
+          result += `<div style="display:flex;align-items:center;gap:6px">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${item.color}"></span>
+            <span>${item.seriesName}: ${item.value} 词</span>
+          </div>`
+        })
+        return result
+      }
+    },
+    legend: {
+      data: ['学习', '复习'],
+      top: 30,
+      textStyle: { color: '#64748B', fontWeight: 500 },
+      itemStyle: { borderWidth: 0 }
     },
     grid: {
       left: '3%',
       right: '4%',
       bottom: '3%',
+      top: 70,
       containLabel: true
     },
     xAxis: {
@@ -51,6 +68,7 @@ function updateChart() {
     },
     series: [
       {
+        name: '学习',
         type: 'bar',
         data: props.data.map(d => d.count),
         itemStyle: {
@@ -65,11 +83,29 @@ function updateChart() {
           }
         },
         emphasis: {
-          itemStyle: {
-            color: '#1D4ED8'
+          itemStyle: { color: '#1D4ED8' }
+        },
+        barWidth: '30%'
+      },
+      {
+        name: '复习',
+        type: 'bar',
+        data: props.data.map(d => d.reviewCount || 0),
+        itemStyle: {
+          borderRadius: [6, 6, 0, 0],
+          color: {
+            type: 'linear',
+            x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: '#FB923C' },
+              { offset: 1, color: '#EA580C' }
+            ]
           }
         },
-        barWidth: '60%'
+        emphasis: {
+          itemStyle: { color: '#C2410C' }
+        },
+        barWidth: '30%'
       }
     ]
   }
