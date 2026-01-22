@@ -32,8 +32,12 @@ function updateChart() {
       formatter: function (params: any[]) {
         let result = `<div style="font-weight:600;margin-bottom:4px">${params[0].axisValue}</div>`
         params.forEach((item: any) => {
+          let color = item.color
+          if (typeof color === 'object' && color.colorStops) {
+            color = color.colorStops[1].color
+          }
           result += `<div style="display:flex;align-items:center;gap:6px">
-            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${item.color}"></span>
+            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${color}"></span>
             <span>${item.seriesName}: ${item.value} 词</span>
           </div>`
         })
@@ -77,13 +81,13 @@ function updateChart() {
             type: 'linear',
             x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: '#3B82F6' },
-              { offset: 1, color: '#2563EB' }
+              { offset: 0, color: '#374151' }, // Dark Gray (lighter)
+              { offset: 1, color: '#111827' }  // Dark Gray (darker)
             ]
           }
         },
         emphasis: {
-          itemStyle: { color: '#1D4ED8' }
+          itemStyle: { color: '#000000' }
         },
         barWidth: '30%'
       },
@@ -97,13 +101,13 @@ function updateChart() {
             type: 'linear',
             x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: '#FB923C' },
-              { offset: 1, color: '#EA580C' }
+              { offset: 0, color: '#E5E7EB' }, // Light Gray
+              { offset: 1, color: '#9CA3AF' }  // Gray
             ]
           }
         },
         emphasis: {
-          itemStyle: { color: '#C2410C' }
+          itemStyle: { color: '#6B7280' }
         },
         barWidth: '30%'
       }

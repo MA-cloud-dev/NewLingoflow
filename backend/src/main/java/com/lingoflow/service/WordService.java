@@ -33,25 +33,34 @@ public class WordService {
 
         if (cachedValue != null) {
             try {
-                return objectMapper.readValue(cachedValue, com.lingoflow.dto.LearningStateDto.class);
+                com.lingoflow.dto.LearningStateDto cachedState = objectMapper.readValue(cachedValue,
+                        com.lingoflow.dto.LearningStateDto.class);
+                // 验证缓存数据有效性：如果词汇列表不为空，则返回缓存
+                if (cachedState.getWords() != null && !cachedState.getWords().isEmpty()) {
+                    return cachedState;
+                }
+                // 缓存数据无效（空词汇），删除缓存并重新从数据库加载
+                redisTemplate.delete(key);
             } catch (Exception e) {
-                // Ignore cache error and fetch from DB
+                // 缓存反序列化失败，删除脏数据
+                redisTemplate.delete(key);
             }
         }
 
         List<Word> words = wordMapper.findWordsNotInUserVocabulary(userId, difficulty, count);
 
         com.lingoflow.dto.LearningStateDto state = new com.lingoflow.dto.LearningStateDto();
-        state.setWords(words);
+        state.setWords(words != null ? words : new java.util.ArrayList<>());
         state.setCurrentIndex(0);
         state.setSelectedWords(new java.util.ArrayList<>());
 
-        if (!words.isEmpty()) {
+        // 只有在有单词时才缓存，避免缓存空数据
+        if (words != null && !words.isEmpty()) {
             try {
                 String json = objectMapper.writeValueAsString(state);
                 redisTemplate.opsForValue().set(key, json, java.time.Duration.ofHours(1));
             } catch (Exception e) {
-                // Ignore cache error
+                // 忽略缓存错误，不影响主流程
             }
         }
 

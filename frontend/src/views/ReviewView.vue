@@ -217,7 +217,7 @@ onMounted(() => {
     <div v-if="phase === 'loading'" class="paper-card p-24 text-center">
       <div class="animate-pulse flex flex-col items-center">
         <div class="w-16 h-16 rounded-full border-4 border-ink/10 border-t-ink animate-spin mb-8"></div>
-        <div class="font-serif italic text-xl text-ink/40">Synchronizing memory banks...</div>
+        <div class="font-serif italic text-xl text-ink/40">正在同步记忆库...</div>
       </div>
     </div>
     
@@ -225,8 +225,8 @@ onMounted(() => {
     <div v-else-if="phase === 'rating' && currentWord" class="space-y-8 animate-in fade-in duration-500">
       <div class="flex items-center justify-between border-b border-[#E5E5E0] pb-4">
         <div>
-          <h1 class="text-3xl font-serif font-black text-ink italic">Daily Review</h1>
-          <p class="text-ink/40 text-sm font-sans uppercase tracking-widest mt-1">Reinforce your knowledge</p>
+          <h1 class="text-3xl font-serif font-black text-ink italic">每日复习</h1>
+          <p class="text-ink/40 text-sm font-sans uppercase tracking-widest mt-1">巩固你的知识</p>
         </div>
         <div class="px-4 py-1 border border-ink/20 rounded-full text-xs font-bold uppercase tracking-widest text-ink/60">
           {{ currentIndex + 1 }} / {{ reviewQueue.length }}
@@ -252,19 +252,19 @@ onMounted(() => {
             @click="handleRating('unknown')"
             class="py-4 border border-transparent hover:border-red-200 hover:bg-red-50 text-red-400 font-bold uppercase tracking-widest text-sm transition-all rounded-lg"
           >
-            Forgot
+            忘记
           </button>
            <button 
             @click="handleRating('fuzzy')"
             class="py-4 border border-transparent hover:border-amber-200 hover:bg-amber-50 text-amber-400 font-bold uppercase tracking-widest text-sm transition-all rounded-lg"
           >
-            Unsure
+            模糊
           </button>
           <button 
             @click="handleRating('known')"
             class="py-4 bg-ink text-white hover:bg-ink/90 font-bold uppercase tracking-widest text-sm transition-all shadow-lg rounded-lg"
           >
-            Known
+            认识
           </button>
         </div>
       </div>
@@ -274,10 +274,10 @@ onMounted(() => {
     <div v-else-if="phase === 'test' && testQuestion" class="space-y-8 animate-in fade-in duration-500">
       <div class="flex items-center justify-between border-b border-[#E5E5E0] pb-4">
         <h1 class="text-3xl font-serif font-black text-ink italic">
-          {{ isInErrorQueue ? 'Reinforcement' : 'Verification' }}
+          {{ isInErrorQueue ? '强化训练' : '验证测试' }}
         </h1>
         <div v-if="isInErrorQueue" class="px-4 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-xs font-bold uppercase tracking-widest">
-          {{ errorQueue.length }} Remaining
+          剩余 {{ errorQueue.length }} 个
         </div>
       </div>
       
@@ -328,12 +328,12 @@ onMounted(() => {
         
         <div v-if="testResult" class="mb-8">
            <div :class="['text-sm font-black uppercase tracking-[0.3em]', testResult.isCorrect ? 'text-green-600' : 'text-red-500']">
-             {{ testResult.isCorrect ? 'Correct' : 'Incorrect' }}
+             {{ testResult.isCorrect ? '正确' : '错误' }}
            </div>
         </div>
         
         <div class="bg-[#F9F9F7] p-8 border-l-4 border-ink mb-10 text-left">
-          <div class="text-[10px] font-bold text-ink/40 uppercase tracking-[0.2em] mb-2">Definition</div>
+          <div class="text-[10px] font-bold text-ink/40 uppercase tracking-[0.2em] mb-2">释义</div>
           <div class="text-2xl font-serif font-bold text-ink">{{ testResult?.correctAnswer || currentWord.meaningCn }}</div>
         </div>
         
@@ -341,7 +341,7 @@ onMounted(() => {
           @click="nextWord"
           class="w-full py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm hover:bg-ink/90 transition-all flex items-center justify-center gap-2 group"
         >
-          Next Card
+          下一个
           <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </button>
       </div>
@@ -352,28 +352,28 @@ onMounted(() => {
       <div class="w-24 h-24 bg-[#F9F9F7] rounded-full border border-[#E5E5E0] flex items-center justify-center mx-auto mb-8">
         <svg class="w-10 h-10 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
       </div>
-      <h1 class="text-5xl font-serif font-bold text-ink mb-4 italic">Review Complete</h1>
+      <h1 class="text-5xl font-serif font-bold text-ink mb-4 italic">复习完成</h1>
       <p class="text-xl text-ink/60 font-light mb-12">"Repetition is the mother of learning."</p>
       
       <div v-if="reviewQueue.length > 0" class="grid grid-cols-3 gap-6 mb-16 px-4">
         <div v-for="s in [
-          { label: 'Correct', value: stats.correct },
-          { label: 'Wrong', value: stats.wrong },
-          { label: 'Unknown', value: stats.unknown }
+          { label: '正确', value: stats.correct },
+          { label: '错误', value: stats.wrong },
+          { label: '未掌握', value: stats.unknown }
         ]" :key="s.label" class="paper-card p-6">
           <div class="text-4xl font-serif font-black text-ink mb-2">{{ s.value }}</div>
           <div class="text-[10px] font-bold text-ink/40 uppercase tracking-widest">{{ s.label }}</div>
         </div>
       </div>
       
-      <div v-if="reviewQueue.length === 0" class="text-lg text-ink/40 mb-12 font-serif italic">No review tasks for today. Enjoy your day!</div>
+      <div v-if="reviewQueue.length === 0" class="text-lg text-ink/40 mb-12 font-serif italic">今天没有复习任务。享受你的一天！</div>
       
       <div class="flex justify-center gap-6">
         <router-link to="/" class="px-8 py-4 border border-[#E5E5E0] text-ink font-bold uppercase tracking-widest text-sm hover:border-ink transition-colors">
-          Dashboard
+          返回首页
         </router-link>
         <button @click="restart" class="px-8 py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm shadow-lg hover:bg-ink/90 transition-colors">
-          {{ reviewQueue.length === 0 ? 'Check for Updates' : 'Review Again' }}
+          {{ reviewQueue.length === 0 ? '检查更新' : '再次复习' }}
         </button>
       </div>
     </div>

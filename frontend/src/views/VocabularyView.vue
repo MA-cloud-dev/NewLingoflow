@@ -105,11 +105,11 @@ onMounted(() => {
       
       <div class="flex items-end justify-between border-b border-ink/10 pb-4">
         <div>
-          <h1 class="text-4xl font-serif font-black text-ink italic tracking-tight">Lexicon</h1>
-          <p class="text-ink/50 font-sans text-sm mt-1">Your personal knowledge repository</p>
+          <h1 class="text-4xl font-serif font-black text-ink italic tracking-tight">生词本</h1>
+          <p class="text-ink/50 font-sans text-sm mt-1">你的个人知识库</p>
         </div>
         <div class="font-sans font-bold text-ink/40 text-xs uppercase tracking-widest">
-          {{ total }} Entries
+          {{ total }} 个词条
         </div>
       </div>
     </div>
@@ -124,7 +124,7 @@ onMounted(() => {
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="Search for words or meanings..."
+        placeholder="搜索单词或释义..."
         class="w-full pl-12 pr-4 py-4 bg-transparent border-b-2 border-ink/10 focus:border-ink text-ink font-serif text-xl placeholder:text-ink/20 focus:outline-none transition-all"
       />
       <button 
@@ -141,7 +141,7 @@ onMounted(() => {
     <!-- Vocabulary List -->
     <div v-loading="loading" class="space-y-4">
       <div v-if="filteredVocabulary.length === 0 && !loading" class="py-24 text-center border border-dashed border-ink/10 rounded-lg">
-        <div class="text-ink/30 font-serif italic text-xl">{{ searchQuery ? 'No matches found.' : 'Start your journey to build your lexicon.' }}</div>
+        <div class="text-ink/30 font-serif italic text-xl">{{ searchQuery ? '未找到匹配结果。' : '开始你的词汇积累之旅吧。' }}</div>
       </div>
       
       <div 
@@ -190,13 +190,13 @@ onMounted(() => {
             <button 
               @click="speakWord(item.word.word)"
               class="w-8 h-8 flex items-center justify-center rounded-full border border-ink/20 text-ink/60 hover:text-ink hover:border-ink transition-all"
-              title="Pronounce"
+              title="发音"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
             </button>
             
             <div class="text-center">
-              <div class="text-[10px] uppercase tracking-widest text-ink/40">Review</div>
+              <div class="text-[10px] uppercase tracking-widest text-ink/40">复习</div>
               <div class="font-bold text-xs" :class="item.nextReviewDate && new Date(item.nextReviewDate) <= new Date() ? 'text-red-500' : 'text-ink/60'">
                 {{ formatNextReviewDate(item.nextReviewDate) }}
               </div>
@@ -205,7 +205,7 @@ onMounted(() => {
             <button 
               @click="handleRemove(item)"
               class="w-8 h-8 flex items-center justify-center text-ink/20 hover:text-red-500 transition-colors"
-              title="Remove"
+              title="删除"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             </button>

@@ -42,19 +42,19 @@ onMounted(loadStats)
       <div>
         <div class="flex items-center gap-3 mb-2">
            <span class="px-2 py-0.5 border border-ink/20 text-ink/60 text-[10px] font-bold uppercase tracking-widest">
-             {{ new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) }}
+             {{ new Date().toLocaleDateString('zh-CN', { weekday: 'long', month: 'short', day: 'numeric' }) }}
            </span>
            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-           <span class="text-[10px] uppercase tracking-wider text-green-600 font-bold">Online</span>
+           <span class="text-[10px] uppercase tracking-wider text-green-600 font-bold">在线</span>
         </div>
         <h2 class="text-4xl md:text-5xl font-serif font-bold text-ink leading-tight italic">Morning Briefing</h2>
-        <p class="text-ink/60 mt-2 font-light text-lg">Welcome back, {{ userStore.userInfo?.username }}. Ready to expand your lexicon?</p>
+        <p class="text-ink/60 mt-2 font-light text-lg">欢迎回来，{{ userStore.userInfo?.username }}。准备好扩充你的词汇量了吗？</p>
       </div>
       
       <div class="hidden md:block">
         <div class="text-right">
-             <div class="text-3xl font-serif font-bold text-ink">{{ stats.streakDays }} <span class="text-sm font-sans font-normal text-ink/40 uppercase tracking-widest">Days</span></div>
-             <p class="text-xs text-ink/40 uppercase tracking-widest">Current Streak</p>
+             <div class="text-3xl font-serif font-bold text-ink">{{ stats.streakDays }} <span class="text-sm font-sans font-normal text-ink/40 uppercase tracking-widest">天</span></div>
+             <p class="text-xs text-ink/40 uppercase tracking-widest">当前连胜</p>
         </div>
       </div>
     </header>
@@ -67,16 +67,15 @@ onMounted(loadStats)
            </div>
            <div class="w-full md:w-3/5 p-8 md:p-12 flex flex-col justify-center">
                <div class="flex items-center gap-2 mb-4">
-                  <span class="text-xs font-bold uppercase tracking-widest text-[#D4B483]">Focus of the Day</span>
+                  <span class="text-xs font-bold uppercase tracking-widest text-[#D4B483]">今日焦点</span>
                </div>
                <h3 class="text-3xl font-serif text-ink mb-4 group-hover:underline underline-offset-4 decoration-1 decoration-[#D4B483]">The Art of Conversation</h3>
                <p class="text-ink/70 mb-8 leading-relaxed font-light text-lg">
-                   Immerse yourself in today's AI-curated article designed to improve your conversational 
-                   flow and introduce 15 new idiomatic expressions.
+                   沉浸在今日的AI精选文章中，提升你的对话流利度并学习15个新习语。
                </p>
                <div class="flex gap-4">
                    <router-link to="/learn" class="px-6 py-3 bg-ink text-white text-sm font-medium hover:bg-ink/90 transition-colors flex items-center gap-2">
-                       Start Reading <svg class="w-4 h-4 text-[#D4B483]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                       开始阅读 <svg class="w-4 h-4 text-[#D4B483]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                    </router-link>
                </div>
            </div>
@@ -89,24 +88,24 @@ onMounted(loadStats)
         <div class="paper-card p-6 flex flex-col justify-between border-t-4 border-t-[#D4B483]">
             <div>
                 <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs font-bold uppercase tracking-widest text-ink/40">Pending Review</span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-ink/40">待复习</span>
                     <svg class="w-5 h-5 text-[#D4B483]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
                 </div>
                 <div class="text-4xl font-serif text-ink mb-1">{{ stats.pendingReview }}</div>
-                <p class="text-sm text-ink/60">Words need your attention.</p>
+                <p class="text-sm text-ink/60">个单词需要复习。</p>
             </div>
-            <router-link to="/review" class="mt-4 text-sm font-bold border-b border-ink/10 pb-1 hover:border-ink transition-colors w-fit">Review Now</router-link>
+            <router-link to="/review" class="mt-4 text-sm font-bold border-b border-ink/10 pb-1 hover:border-ink transition-colors w-fit">立即复习</router-link>
         </div>
 
         <!-- Learned Card -->
         <div class="paper-card p-6 flex flex-col justify-between border-t-4 border-t-ink/20">
              <div>
                 <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs font-bold uppercase tracking-widest text-ink/40">Total Learned</span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-ink/40">已掌握</span>
                     <svg class="w-5 h-5 text-ink/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                 </div>
                 <div class="text-4xl font-serif text-ink mb-1">{{ stats.totalWords }}</div>
-                <p class="text-sm text-ink/60">Lexicon size.</p>
+                <p class="text-sm text-ink/60">当前词汇量。</p>
             </div>
         </div>
         
@@ -114,7 +113,7 @@ onMounted(loadStats)
          <div class="paper-card p-6 flex flex-col justify-between border-t-4 border-t-ink/20">
              <div>
                 <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs font-bold uppercase tracking-widest text-ink/40">Today's Goal</span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-ink/40">今日目标</span>
                     <svg class="w-5 h-5 text-ink/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
                 <div class="flex items-baseline gap-2">
@@ -133,7 +132,7 @@ onMounted(loadStats)
                 <div class="w-10 h-10 rounded-full bg-ink/5 flex items-center justify-center mx-auto mb-3">
                     <svg class="w-5 h-5 text-ink/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 </div>
-                <span class="text-sm font-bold text-ink/60">View Analytics</span>
+                <span class="text-sm font-bold text-ink/60">查看详细统计</span>
             </div>
         </div>
     </div>

@@ -31,6 +31,7 @@ const allWords = ref<Word[]>([])
 const currentWordIndex = ref(0)
 const selectedWords = ref<Word[]>([])
 const loadingWords = ref(false)
+const noWordsAvailable = ref(false) // 标记是否无可学习词汇
 
 // 四选一答题相关
 const quizOptions = ref<string[]>([])
@@ -94,10 +95,19 @@ watch(currentWord, (word) => {
 // ========== 选词逻辑 ==========
 async function loadWords() {
   loadingWords.value = true
+  noWordsAvailable.value = false
   try {
     const res = await getLearningWords(20)
     if (res.code === 200) {
-      allWords.value = res.data.words
+      allWords.value = res.data.words || []
+      
+      // 检测是否无可学习词汇
+      if (allWords.value.length === 0) {
+        noWordsAvailable.value = true
+        ElMessage.info('暂无新单词可学习，请先添加词库或等待复习')
+        return
+      }
+      
       // Restore state if available
       if (typeof res.data.currentIndex === 'number') {
         currentWordIndex.value = res.data.currentIndex
@@ -114,9 +124,7 @@ async function loadWords() {
          currentWordIndex.value = 0
       }
 
-      if (allWords.value.length > 0) {
-        generateQuizOptions()
-      }
+      generateQuizOptions()
     }
   } catch (error) {
     ElMessage.error('加载单词失败')
@@ -325,7 +333,7 @@ function resetLearning() {
   feedback.value = null
   attemptCount.value = 0
   bestScores.value.clear()
-  // showMeaning.value = false
+  noWordsAvailable.value = false
   loadWords()
 }
 
@@ -356,7 +364,7 @@ onMounted(() => {
   <div class="max-w-6xl mx-auto space-y-8">
     <!-- Settings Bar (Pass-through style update recommended inside component, but wrapper here helps) -->
     <div class="paper-card p-4 rounded-lg flex justify-between items-center bg-white sticky top-4 z-40 shadow-sm border border-[#E5E5E0]">
-       <div class="font-serif font-bold italic text-ink text-lg">Session Settings</div>
+       <div class="font-serif font-bold italic text-ink text-lg">学习设置</div>
        <LearningSettingsBar v-model="learningSettings" class="!bg-transparent !p-0 !shadow-none" />
     </div>
 
@@ -364,18 +372,18 @@ onMounted(() => {
     <div v-if="phase === 'quiz'" class="max-w-3xl mx-auto py-12">
       <div class="text-center mb-12">
         <div class="inline-block border-b-2 border-[#D4B483] mb-4 pb-1 text-xs font-bold uppercase tracking-[0.2em] text-[#D4B483]">
-          Discovery Phase
+          单词初识
         </div>
         <h1 class="text-5xl font-serif font-bold text-ink mb-4 italic">Expand Your Lexicon</h1>
-        <p class="text-ink/60 font-light text-lg">Select words to curate your daily reading list.</p>
+        <p class="text-ink/60 font-light text-lg">选择单词以生成你的每日阅读列表。</p>
         
         <div class="mt-8 flex justify-center items-center gap-6 text-sm font-medium text-ink/60">
            <label class="flex items-center gap-2 cursor-pointer hover:text-ink transition-colors">
             <input type="checkbox" v-model="autoSpeak" class="w-4 h-4 rounded border-[#D4B483] text-[#D4B483] focus:ring-[#D4B483]">
-            Auto-pronounce
+            自动发音
           </label>
            <div class="h-4 w-px bg-ink/10"></div>
-           <div>Selected: <span class="font-bold text-ink">{{ selectedWords.length }}</span> / 5</div>
+           <div>已选: <span class="font-bold text-ink">{{ selectedWords.length }}</span> / 5</div>
         </div>
       </div>
       
@@ -390,6 +398,34 @@ onMounted(() => {
         </span>
       </div>
       
+      <!-- Empty State: No Words Available -->
+      <div v-if="noWordsAvailable && !loadingWords" class="paper-card p-12 md:p-16 text-center">
+        <div class="w-20 h-20 bg-[#F9F9F7] rounded-full flex items-center justify-center mx-auto mb-8 border border-[#E5E5E0]">
+          <svg class="w-10 h-10 text-[#D4B483]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <h2 class="text-3xl font-serif font-bold text-ink mb-4 italic">暂无可学习词汇</h2>
+        <p class="text-ink/60 font-light text-lg mb-8 max-w-md mx-auto">
+          你已经学习了当前词库中的所有单词，或者词库尚未添加新词汇。
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <router-link 
+            to="/vocabulary" 
+            class="px-8 py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm hover:bg-ink/90 transition-all shadow-lg"
+          >
+            前往词库
+          </router-link>
+          <router-link 
+            to="/review" 
+            class="px-8 py-4 border border-[#E5E5E0] text-ink font-bold uppercase tracking-widest text-sm hover:border-ink transition-colors"
+          >
+            复习单词
+          </router-link>
+        </div>
+      </div>
+
+
       <!-- Quiz Card -->
       <div v-if="currentWord" v-loading="loadingWords" class="paper-card p-12 md:p-16 relative group transition-all duration-500 hover:shadow-xl">
         <div class="text-center mb-12">
@@ -432,7 +468,7 @@ onMounted(() => {
         <!-- Controls -->
         <div v-if="!showResult" class="text-center">
           <button @click="giveUp" class="text-sm font-bold uppercase tracking-widest text-[#D4B483] hover:text-[#BFA175] transition-colors border-b border-transparent hover:border-[#BFA175]">
-            Reveal Definition
+            查看释义
           </button>
         </div>
         
@@ -446,10 +482,10 @@ onMounted(() => {
            
            <div class="flex gap-4">
              <button @click="skipWord" class="flex-1 py-4 border border-[#E5E5E0] bg-white hover:bg-[#F9F9F7] text-ink font-bold uppercase tracking-widest text-sm transition-all text-ink/40 hover:text-ink">
-               Skip
+               跳过
              </button>
              <button @click="addWord" class="flex-[2] py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm hover:bg-ink/90 transition-all shadow-lg">
-               {{ (isCorrect && !givenUp) ? 'Add to Collection' : 'Learn This Word' }}
+               {{ (isCorrect && !givenUp) ? '添加到生词本' : '学习此词' }}
              </button>
            </div>
         </div>
@@ -465,19 +501,19 @@ onMounted(() => {
           <div class="h-4 w-64 bg-ink/10 mb-4 rounded-full"></div>
           <div class="h-4 w-48 bg-ink/10 mb-4 rounded-full"></div>
           <div class="h-4 w-56 bg-ink/10 rounded-full"></div>
-          <p class="mt-8 font-serif italic text-ink/40">Curating your personalized article...</p>
+          <p class="mt-8 font-serif italic text-ink/40">正在为你生成个性化文章...</p>
         </div>
       </div>
       
-      <template v-else-if="currentArticle">
+      <div v-else-if="currentArticle">
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-ink/10 pb-6">
           <button @click="resetLearning" class="flex items-center gap-2 text-ink/40 hover:text-ink transition-colors font-bold uppercase tracking-widest text-xs">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            Exit Session
+            退出学习
           </button>
           <div class="font-serif italic text-ink/40">
-            Progress: <span class="text-ink not-italic font-sans font-bold">{{ bestScores.size }}</span> / {{ vocabularyItems.length }}
+            进度: <span class="text-ink not-italic font-sans font-bold">{{ bestScores.size }}</span> / {{ vocabularyItems.length }}
           </div>
         </div>
 
@@ -488,9 +524,9 @@ onMounted(() => {
                <div class="flex items-center justify-between mb-8">
                  <div class="flex gap-3">
                    <span class="px-3 py-1 border border-ink/20 text-ink/60 text-[10px] font-bold uppercase tracking-widest rounded-full">{{ learningSettings.theme }}</span>
-                   <span class="px-3 py-1 border border-ink/20 text-ink/60 text-[10px] font-bold uppercase tracking-widest rounded-full">Reading</span>
+                   <span class="px-3 py-1 border border-ink/20 text-ink/60 text-[10px] font-bold uppercase tracking-widest rounded-full">阅读</span>
                  </div>
-                 <button @click="speakWord(currentArticle.content.replace(/\*\*/g, ''))" class="text-ink/40 hover:text-ink transition-colors" title="Listen">
+                 <button @click="speakWord(currentArticle.content.replace(/\*\*/g, ''))" class="text-ink/40 hover:text-ink transition-colors" title="朗读全文">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
                  </button>
                </div>
@@ -511,7 +547,7 @@ onMounted(() => {
                         <div class="font-serif font-bold text-xl text-ink mb-1">{{ seg.text }}</div>
                         <div class="text-ink/60 font-medium text-sm mb-3">{{ seg.meaning }}</div>
                         <button class="text-[10px] uppercase font-bold tracking-widest text-[#D4B483] hover:text-[#BFA175] flex items-center gap-1" @click="speakWord(seg.text)">
-                           LISTEN <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                           朗读 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
                         </button>
                       </div>
                     </el-popover>
@@ -522,7 +558,7 @@ onMounted(() => {
                <!-- Translation Toggle -->
                <div v-if="currentArticle.chineseTranslation" class="mt-12 pt-8 border-t border-ink/10">
                  <button @click="showTranslation = !showTranslation" class="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ink/40 hover:text-ink transition-colors">
-                    <span>{{ showTranslation ? 'Hide' : 'Show' }} Translation</span>
+                    <span>{{ showTranslation ? '隐藏翻译' : '显示翻译' }}</span>
                     <svg class="w-4 h-4 transition-transform" :class="showTranslation ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                  </button>
                  <div v-show="showTranslation" class="mt-6 font-serif leading-loose text-ink/60 text-lg bg-[#F9F9F7] p-8 border-l-2 border-[#D4B483]">
@@ -532,7 +568,7 @@ onMounted(() => {
             </article>
             
             <div v-if="currentArticle.comprehensionQuestions?.length" class="paper-card p-8">
-               <h3 class="font-serif font-bold text-2xl mb-6">Comprehension</h3>
+               <h3 class="font-serif font-bold text-2xl mb-6">阅读理解</h3>
                <ComprehensionQuiz :questions="currentArticle.comprehensionQuestions" @complete="() => {}" />
             </div>
           </div>
@@ -542,8 +578,8 @@ onMounted(() => {
             <div class="bg-white border border-[#E5E5E0] shadow-xl p-6 md:p-8 sticky top-6">
                <div class="mb-8 border-b border-ink/10 pb-4 flex justify-between items-end">
                  <div>
-                    <h3 class="font-serif font-bold text-2xl italic">Writing Practice</h3>
-                    <p class="text-sm text-ink/40 mt-1">Use the words in context</p>
+                    <h3 class="font-serif font-bold text-2xl italic">造句练习</h3>
+                    <p class="text-sm text-ink/40 mt-1">在语境中运用单词</p>
                  </div>
                  <div class="text-3xl font-serif text-[#D4B483]">{{ selectedSentenceWordIndex + 1 }}<span class="text-base text-ink/20">/{{ vocabularyItems.length }}</span></div>
                </div>
@@ -570,12 +606,12 @@ onMounted(() => {
                <!-- Current Task -->
                <div v-if="currentVocabulary" class="space-y-6">
                   <div class="bg-[#F9F9F7] p-6 border-l-2 border-ink">
-                     <div class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-2">Target Word</div>
+                     <div class="text-[10px] font-bold uppercase tracking-widest text-ink/40 mb-2">目标单词</div>
                      <div class="text-3xl font-serif font-black mb-4">{{ currentVocabulary.word?.word }}</div>
                      
                      <div v-if="currentSentenceTask">
                         <div class="font-serif italic text-lg text-ink/80 mb-4">"{{ currentSentenceTask.chineseExample }}"</div>
-                        <div class="text-xs font-bold uppercase tracking-widest text-[#D4B483]">Theme: {{ currentSentenceTask.theme }}</div>
+                        <div class="text-xs font-bold uppercase tracking-widest text-[#D4B483]">主题: {{ currentSentenceTask.theme }}</div>
                      </div>
                   </div>
                   
@@ -584,12 +620,12 @@ onMounted(() => {
                       v-model="userSentence" 
                       rows="4" 
                       class="w-full bg-white border border-[#E5E5E0] p-4 font-serif text-lg outline-none focus:border-ink transition-colors resize-none placeholder:text-ink/20 placeholder:italic"
-                      placeholder="Combine the word into a sentence..."
+                      placeholder="用该词造句..."
                       :disabled="!!feedback && remainingAttempts === 0"
                     ></textarea>
                      <div class="flex justify-between mt-2 text-[10px] font-bold uppercase tracking-widest text-ink/40">
-                        <span>Attempts Left: {{ remainingAttempts }}</span> 
-                        <span v-if="userSentence.length > 0">Drafting</span>
+                        <span>剩余次数: {{ remainingAttempts }}</span> 
+                        <span v-if="userSentence.length > 0">正在输入</span>
                      </div>
                   </div>
                   
@@ -599,7 +635,7 @@ onMounted(() => {
                     @click="feedback ? retryCurrentWord() : submitUserSentence()"
                     class="w-full py-4 bg-ink text-white font-bold uppercase tracking-widest hover:bg-ink/90 transition-all disabled:opacity-50"
                   >
-                    {{ submittingSentence ? 'Analyzing...' : feedback ? 'Try Again' : 'Submit for Review' }}
+                    {{ submittingSentence ? '分析中...' : feedback ? '重试' : '提交检查' }}
                   </button>
                   
                   <!-- Feedback -->
@@ -607,12 +643,12 @@ onMounted(() => {
                      <div class="p-6 border" :class="feedback.score >= 80 ? 'bg-green-50/30 border-green-200' : 'bg-amber-50/30 border-amber-200'">
                         <div class="flex items-center gap-3 mb-4">
                            <span class="text-4xl font-serif font-bold">{{ feedback.score }}</span>
-                           <span class="text-xs font-bold uppercase tracking-widest">{{ feedback.isCorrect ? 'Excellent' : 'Needs Improvement' }}</span>
+                           <span class="text-xs font-bold uppercase tracking-widest">{{ feedback.isCorrect ? '优秀' : '需改进' }}</span>
                         </div>
                         <div class="space-y-2 text-sm text-ink/70 font-medium">
-                           <p><span class="font-bold text-ink">Grammar:</span> {{ feedback.feedback.grammar }}</p>
-                           <p><span class="font-bold text-ink">Usage:</span> {{ feedback.feedback.usage }}</p>
-                           <p><span class="font-bold text-ink">Tip:</span> {{ feedback.feedback.suggestion }}</p>
+                           <p><span class="font-bold text-ink">语法:</span> {{ feedback.feedback.grammar }}</p>
+                           <p><span class="font-bold text-ink">用法:</span> {{ feedback.feedback.usage }}</p>
+                           <p><span class="font-bold text-ink">建议:</span> {{ feedback.feedback.suggestion }}</p>
                         </div>
                      </div>
                   </div>
@@ -622,13 +658,13 @@ onMounted(() => {
                     @click="finishLearning"
                     class="w-full py-4 border-2 border-ink bg-white text-ink font-bold uppercase tracking-widest hover:bg-ink hover:text-white transition-all"
                   >
-                    Complete Session
+                    完成今日学习
                   </button>
                </div>
             </div>
           </div>
         </div>
-      </template>
+      </div>
     </div>
 
     <!-- ========== COMPLETE PHASE ========== -->
@@ -641,10 +677,10 @@ onMounted(() => {
        
        <div class="flex justify-center gap-6">
           <router-link to="/" class="px-8 py-4 border border-[#E5E5E0] text-ink font-bold uppercase tracking-widest text-sm hover:border-ink transition-colors">
-            Dashboard
+            返回首页
           </router-link>
           <button @click="resetLearning" class="px-8 py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm hover:bg-ink/90 transition-colors">
-            Start New Session
+            开始新学习
           </button>
        </div>
     </div>

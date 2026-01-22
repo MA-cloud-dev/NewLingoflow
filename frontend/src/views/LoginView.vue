@@ -46,28 +46,28 @@ async function handleLogin() {
           L
         </div>
         <h1 class="text-4xl font-serif font-black text-ink italic mb-2 tracking-tight">LingoFlow</h1>
-        <p class="text-ink/50 font-sans text-sm tracking-wide">The Editor's Choice for Learning</p>
+        <p class="text-ink/50 font-sans text-sm tracking-wide">编辑精选的学习工具</p>
       </div>
       
       <el-form :model="form" @submit.prevent="handleLogin" class="space-y-6 text-left">
         <div class="space-y-4">
           <div class="space-y-1">
-            <label class="text-xs font-bold text-ink/40 uppercase tracking-widest pl-1">Username</label>
+            <label class="text-xs font-bold text-ink/40 uppercase tracking-widest pl-1">用户名</label>
             <input 
               v-model="form.username" 
               type="text" 
               class="w-full px-4 py-3 bg-[#F9F9F7] border border-ink/10 rounded-lg text-ink font-medium focus:outline-none focus:border-ink transition-colors placeholder:text-ink/20"
-              placeholder="Enter your username"
+              placeholder="请输入用户名"
             />
           </div>
           
           <div class="space-y-1">
-             <label class="text-xs font-bold text-ink/40 uppercase tracking-widest pl-1">Password</label>
+             <label class="text-xs font-bold text-ink/40 uppercase tracking-widest pl-1">密码</label>
             <input 
               v-model="form.password" 
               type="password" 
               class="w-full px-4 py-3 bg-[#F9F9F7] border border-ink/10 rounded-lg text-ink font-medium focus:outline-none focus:border-ink transition-colors placeholder:text-ink/20"
-              placeholder="Enter your password"
+              placeholder="请输入密码"
             />
           </div>
         </div>
@@ -78,15 +78,15 @@ async function handleLogin() {
           class="w-full py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm rounded-lg hover:bg-ink/90 transition-all shadow-lg flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
         >
           <span v-if="loading" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-          <span v-else>Sign In</span>
+          <span v-else>登录</span>
           <svg v-if="!loading" class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </button>
       </el-form>
       
       <div class="mt-8 pt-8 border-t border-ink/5 text-sm text-ink/60 font-sans">
-        New to LingoFlow?
+        还没有账号？
         <router-link to="/register" class="text-ink font-bold hover:underline ml-1">
-          Create an account
+          立即注册
         </router-link>
       </div>
     </div>

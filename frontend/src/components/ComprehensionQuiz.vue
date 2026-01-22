@@ -14,7 +14,7 @@
     <!-- Question Card -->
     <div class="bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden">
       
-      <!-- Question Progress Bar / Navigator -->
+    <!-- Question Progress Bar / Navigator -->
       <div class="mb-8">
         <div class="flex items-center gap-2 mb-2">
           <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">题目进度</span>
@@ -41,7 +41,7 @@
             class="flex-1 text-center text-[10px] font-medium"
             :class="idx === currentIndex ? 'text-blue-600' : 'text-slate-300'"
           >
-            {{ q.type === 'main_idea' ? 'Main' : 'Vocab' }}
+            {{ q.type === 'main_idea' ? '主旨' : '词汇' }}
           </span>
         </div>
       </div>
@@ -52,7 +52,7 @@
           class="px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider"
           :class="currentQuestion.type === 'main_idea' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'"
         >
-          {{ currentQuestion.type === 'main_idea' ? 'Main Idea' : 'Vocabulary Focus' }}
+          {{ currentQuestion.type === 'main_idea' ? '主旨大意' : '词汇聚焦' }}
         </span>
       </div>
 
@@ -63,7 +63,7 @@
 
       <!-- Word Context (if applicable) -->
       <div v-if="currentQuestion.word" class="mb-8 p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-500">
-        Focus Word: <span class="font-bold text-slate-700">{{ currentQuestion.word }}</span>
+        关键词: <span class="font-bold text-slate-700">{{ currentQuestion.word }}</span>
       </div>
 
       <!-- Options -->
@@ -94,7 +94,7 @@
               {{ isCorrect ? '✓' : '×' }}
             </div>
             <span class="font-black text-lg" :class="isCorrect ? 'text-emerald-600' : 'text-red-600'">
-              {{ isCorrect ? 'Correct!' : 'Incorrect' }}
+              {{ isCorrect ? '回答正确!' : '回答错误' }}
             </span>
          </div>
          <p class="text-slate-600 pl-11">{{ currentQuestion.explanation }}</p>
@@ -104,7 +104,7 @@
         @click="nextQuestion"
         class="w-full py-4 rounded-2xl bg-[#0F172A] text-white font-bold text-lg shadow-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2"
       >
-        {{ isLastQuestion ? 'Complete Quiz' : 'Next Question' }}
+        {{ isLastQuestion ? '完成测试' : '下一题' }}
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       </button>
     </div>
@@ -135,8 +135,6 @@ const answeredQuestions = reactive<boolean[]>(
 
 const currentQuestion = computed(() => props.questions[currentIndex.value])
 const isLastQuestion = computed(() => currentIndex.value === props.questions.length - 1)
-// 检查是否所有题目都已回答
-const allAnswered = computed(() => answeredQuestions.every(a => a))
 
 // 当前题目的选中索引
 const selectedOptionIndex = computed(() => selectedOptions[currentIndex.value])

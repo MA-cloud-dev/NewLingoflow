@@ -32,8 +32,8 @@ export default {
         }
       },
       fontFamily: {
-        serif: ['"Playfair Display"', 'serif'],
-        sans: ['"Source Sans 3"', 'sans-serif'],
+        serif: ['"Playfair Display"', '"Noto Serif SC"', '"Songti SC"', '"SimSun"', 'serif'],
+        sans: ['"Source Sans 3"', '"Noto Sans SC"', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
       },
     },
   },

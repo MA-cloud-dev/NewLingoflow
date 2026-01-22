@@ -8,7 +8,7 @@
     <div class="space-y-8">
       <!-- 主题选择 -->
       <div class="space-y-3">
-        <label class="text-sm font-bold text-slate-700 uppercase tracking-wide">Topic Theme</label>
+        <label class="text-sm font-bold text-slate-700 uppercase tracking-wide">文章主题</label>
         <div class="grid grid-cols-2 gap-3">
           <button
             v-for="theme in themes"
@@ -29,7 +29,7 @@
 
       <!-- 难度选择 -->
       <div class="space-y-3">
-        <label class="text-sm font-bold text-slate-700 uppercase tracking-wide">Difficulty</label>
+        <label class="text-sm font-bold text-slate-700 uppercase tracking-wide">难度等级</label>
         <div class="flex p-1 bg-slate-100 rounded-xl">
           <button
             v-for="diff in difficulties"
@@ -49,7 +49,7 @@
       
        <!-- 文章长度选择 -->
       <div class="space-y-3">
-        <label class="text-sm font-bold text-slate-700 uppercase tracking-wide">Article Length</label>
+        <label class="text-sm font-bold text-slate-700 uppercase tracking-wide">文章长度</label>
         <div class="flex p-1 bg-slate-100 rounded-xl">
           <button
             v-for="len in lengths"
@@ -98,24 +98,24 @@ const settings = reactive<LearningSettings>({
 })
 
 const themes = [
-  { label: 'Daily Life', value: 'Daily Life', icon: '🏠' },
-  { label: 'Sci-Fi', value: 'Science Fiction', icon: '🚀' },
-  { label: 'Technology', value: 'Technology & Innovation', icon: '💻' },
-  { label: 'Nature', value: 'Nature & Environment', icon: '🌿' },
-  { label: 'Culture', value: 'Culture & Travel', icon: '🌍' },
-  { label: 'Business', value: 'Business & Economy', icon: '💼' }
+  { label: '日常生活', value: 'Daily Life', icon: '🏠' },
+  { label: '科幻', value: 'Science Fiction', icon: '🚀' },
+  { label: '科技创新', value: 'Technology & Innovation', icon: '💻' },
+  { label: '自然环境', value: 'Nature & Environment', icon: '🌿' },
+  { label: '文化旅行', value: 'Culture & Travel', icon: '🌍' },
+  { label: '商业经济', value: 'Business & Economy', icon: '💼' }
 ]
 
 const difficulties = [
-  { label: 'Easy', value: 'easy' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Hard', value: 'hard' }
+  { label: '简单', value: 'easy' },
+  { label: '中等', value: 'medium' },
+  { label: '困难', value: 'hard' }
 ]
 
 const lengths = [
-  { label: 'Short', value: 'short' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Long', value: 'long' }
+  { label: '短', value: 'short' },
+  { label: '中', value: 'medium' },
+  { label: '长', value: 'long' }
 ]
 
 const confirmSettings = () => {
