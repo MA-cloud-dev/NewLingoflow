@@ -86,6 +86,11 @@ public class WordService {
         }
     }
 
+    public void clearLearningProgress(Long userId) {
+        String key = "learning:selection:" + userId;
+        redisTemplate.delete(key);
+    }
+
     public int getTotalCount() {
         return wordMapper.count();
     }

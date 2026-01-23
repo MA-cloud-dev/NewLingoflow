@@ -75,4 +75,26 @@ public class LearningController {
         Map<String, Object> result = learningService.submitSentence(user.getId(), sessionId, vocabularyId, sentence);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
+    @GetMapping("/state")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getLearningState(
+            @AuthenticationPrincipal User user) {
+        Map<String, Object> state = learningService.getLearningState(user.getId());
+        return ResponseEntity.ok(ApiResponse.success(state));
+    }
+
+    @PostMapping("/state")
+    public ResponseEntity<ApiResponse<Void>> saveLearningState(
+            @AuthenticationPrincipal User user,
+            @RequestBody Map<String, Object> state) {
+        learningService.saveLearningState(user.getId(), state);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @DeleteMapping("/state")
+    public ResponseEntity<ApiResponse<Void>> clearLearningState(
+            @AuthenticationPrincipal User user) {
+        learningService.clearLearningState(user.getId());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

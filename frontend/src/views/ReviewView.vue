@@ -22,6 +22,25 @@ const currentWord = computed(() => reviewQueue.value[currentIndex.value])
 const errorQueue = ref<number[]>([])
 const isInErrorQueue = ref(false)
 
+// 错误队列的可视化数据
+const errorWords = computed(() => {
+  return errorQueue.value
+    .map(id => reviewQueue.value.find(w => w.vocabularyId === id))
+    .filter((w): w is ReviewWord => !!w)
+})
+
+// 查看详情相关
+const peekWord = ref<ReviewWord | null>(null)
+
+function openPeek(word: ReviewWord) {
+  if (isInErrorQueue.value) return
+  peekWord.value = word
+}
+
+function closePeek() {
+  peekWord.value = null
+}
+
 // 测试题目
 const testQuestion = ref<TestQuestion | null>(null)
 const selectedOption = ref<string | null>(null)
@@ -47,16 +66,21 @@ async function loadReviewQueue() {
   try {
     const res = await getReviewQueue()
     if (res.code === 200) {
-      reviewQueue.value = res.data.words
+      reviewQueue.value = res.data.words || []
       if (reviewQueue.value.length > 0) {
         phase.value = 'rating'
         setTimeout(() => speakWord(currentWord.value.word), 300)
       } else {
         phase.value = 'complete'
       }
+    } else {
+      ElMessage.error(res.message || '加载复习队列失败')
+      phase.value = 'complete'
     }
   } catch (error) {
+    console.error('Failed to load review queue:', error)
     ElMessage.error('加载复习队列失败')
+    phase.value = 'complete'
   }
 }
 
@@ -213,6 +237,42 @@ onMounted(() => {
 
 <template>
   <div class="max-w-3xl mx-auto py-8">
+    <!-- Progress Bar & Error Queue Header -->
+    <div v-if="phase !== 'loading' && phase !== 'complete'" class="mb-8 space-y-6">
+      <!-- Progress Bar -->
+      <div class="h-1 bg-ink/5 rounded-full overflow-hidden">
+        <div 
+          class="h-full bg-[#D4B483] transition-all duration-500 ease-out"
+          :style="{ width: `${((currentIndex) / reviewQueue.length) * 100}%` }"
+        ></div>
+      </div>
+
+      <!-- Error Queue Display -->
+      <div v-if="errorWords.length > 0" class="space-y-2">
+        <div class="flex justify-between items-center text-xs font-bold uppercase tracking-widest text-ink/40">
+          <span>需要强化 ({{ errorWords.length }})</span>
+          <span v-if="isInErrorQueue" class="text-amber-600">强化模式中 •不可查看</span>
+          <span v-else class="text-ink/20">点击查看详情</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="word in errorWords"
+            :key="word.vocabularyId"
+            @click="openPeek(word)"
+            :disabled="isInErrorQueue"
+            class="px-3 py-1 rounded-md text-xs font-bold transition-all border"
+            :class="[
+              isInErrorQueue 
+                ? 'bg-red-50 text-red-300 border-red-100 cursor-not-allowed opacity-75' 
+                : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:border-red-300 cursor-pointer'
+            ]"
+          >
+            {{ word.word }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading State -->
     <div v-if="phase === 'loading'" class="paper-card p-24 text-center">
       <div class="animate-pulse flex flex-col items-center">
@@ -374,6 +434,25 @@ onMounted(() => {
         </router-link>
         <button @click="restart" class="px-8 py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm shadow-lg hover:bg-ink/90 transition-colors">
           {{ reviewQueue.length === 0 ? '检查更新' : '再次复习' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Peek Modal -->
+    <div v-if="peekWord" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/20 backdrop-blur-sm animate-in fade-in duration-200">
+      <div class="paper-card p-10 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200" @click.stop>
+        <div class="text-center mb-8">
+           <h2 class="text-4xl font-serif font-black text-ink mb-2">{{ peekWord.word }}</h2>
+           <div class="text-lg text-ink/40 font-serif italic mb-6">/ {{ peekWord.phonetic }} /</div>
+           <div class="p-4 bg-[#F9F9F7] rounded">
+              <div class="text-xl font-bold text-ink">{{ peekWord.meaningCn }}</div>
+           </div>
+        </div>
+        <button 
+          @click="closePeek"
+          class="w-full py-4 bg-ink text-white font-bold uppercase tracking-widest text-xs hover:bg-ink/90 transition-all rounded"
+        >
+          返回答题
         </button>
       </div>
     </div>

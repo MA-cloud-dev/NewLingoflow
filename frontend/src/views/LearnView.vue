@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
   getLearningWords, 
@@ -7,10 +7,14 @@ import {
   generateArticle, 
   submitSentence,
   updateLearningProgress,
+  getLearningState,
+  saveLearningState,
+  clearLearningState,
   type Word, 
   type VocabularyItem,
   type ArticleData,
-  type SentenceFeedback
+  type SentenceFeedback,
+  type LearningState
 } from '@/api/learning'
 import LearningSettingsBar, { type LearningSettings } from '@/components/LearningSettingsBar.vue'
 import ComprehensionQuiz from '@/components/ComprehensionQuiz.vue'
@@ -42,6 +46,15 @@ const showResult = ref(false)
 const currentWord = computed(() => allWords.value[currentWordIndex.value])
 const autoSpeak = ref(true)
 
+// 判断是否是最后一个需要选择的单词（用于动态切换按钮文案）
+const isLastWordForSelection = computed(() => {
+  // 已选4个单词，当前添加后将达到5个
+  if (selectedWords.value.length === 4) return true
+  // 已经是词库的最后一个单词且已有选词
+  if (currentWordIndex.value >= allWords.value.length - 1 && selectedWords.value.length > 0) return true
+  return false
+})
+
 // ========== 学习阶段 (文章+题目+造句一体化) ==========
 const currentArticle = ref<ArticleData | null>(null)
 const sessionId = ref<number | null>(null)
@@ -72,13 +85,38 @@ const currentSentenceTask = computed(() => {
 const remainingAttempts = computed(() => maxAttempts - attemptCount.value)
 
 // ========== 朗读功能 ==========
-function speakWord(word: string) {
+const isSpeaking = ref(false)
+
+function speakWord(text: string) {
   if ('speechSynthesis' in window) {
     speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(word)
+    // Reset state first
+    isSpeaking.value = false
+    
+    const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = 'en-US'
-    utterance.rate = 0.8
+    utterance.rate = 0.7
+    
+    utterance.onstart = () => { isSpeaking.value = true }
+    utterance.onend = () => { isSpeaking.value = false }
+    utterance.onerror = () => { isSpeaking.value = false }
+    
     speechSynthesis.speak(utterance)
+  }
+}
+
+function stopSpeaking() {
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel()
+    isSpeaking.value = false
+  }
+}
+
+function toggleArticleReading() {
+  if (isSpeaking.value) {
+    stopSpeaking()
+  } else if (currentArticle.value) {
+    speakWord(currentArticle.value.content.replace(/\*\*/g, ''))
   }
 }
 
@@ -253,6 +291,8 @@ async function startStudyPhase() {
     if (articleRes.code === 200) {
       sessionId.value = articleRes.data.sessionId
       currentArticle.value = articleRes.data.article
+      // 保存学习状态到 Redis
+      await saveCurrentState()
     } else {
       ElMessage.error('生成文章失败')
       phase.value = 'quiz'
@@ -317,8 +357,10 @@ function retryCurrentWord() {
   feedback.value = null
 }
 
-function finishLearning() {
+async function finishLearning() {
   phase.value = 'complete'
+  // 清除缓存状态
+  await clearLearningState()
 }
 
 function resetLearning() {
@@ -343,10 +385,13 @@ const articleSegments = computed(() => {
   const parts = currentArticle.value.content.split(/(\*\*.*?\*\*)/g)
   return parts.map(part => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      const word = part.slice(2, -2)
-      const vocabItem = vocabularyItems.value.find(v => v.word?.word?.toLowerCase() === word.toLowerCase())
+      const rawContent = part.slice(2, -2)
+      // 清除标点符号以便匹配词库（支持常见标点）
+      const lookupWord = rawContent.replace(/[.,!?;:"'()]/g, '').trim()
+      
+      const vocabItem = vocabularyItems.value.find(v => v.word?.word?.toLowerCase() === lookupWord.toLowerCase())
       return {
-        text: word,
+        text: rawContent,
         isHighlight: true,
         meaning: vocabItem?.word?.meaningCn || ''
       }
@@ -355,15 +400,59 @@ const articleSegments = computed(() => {
   })
 })
 
-onMounted(() => {
+onMounted(async () => {
+  // 先尝试恢复之前的学习状态
+  try {
+    const stateRes = await getLearningState()
+    if (stateRes.code === 200 && stateRes.data && stateRes.data.phase === 'study') {
+      // 恢复学习状态
+      phase.value = stateRes.data.phase
+      sessionId.value = stateRes.data.sessionId ?? null
+      currentArticle.value = stateRes.data.article ?? null
+      vocabularyItems.value = stateRes.data.vocabularyItems ?? []
+      selectedSentenceWordIndex.value = stateRes.data.selectedSentenceWordIndex ?? 0
+      if (stateRes.data.bestScores) {
+        bestScores.value = new Map(Object.entries(stateRes.data.bestScores).map(([k, v]) => [Number(k), v as number]))
+      }
+      if (stateRes.data.learningSettings) {
+        learningSettings.value = stateRes.data.learningSettings
+      }
+      ElMessage.success('已恢复上次学习进度')
+      return
+    }
+  } catch (e) {
+    // 恢复失败，继续正常流程
+  }
   loadWords()
 })
+
+onUnmounted(() => {
+  stopSpeaking()
+})
+
+// 保存学习状态到 Redis
+async function saveCurrentState() {
+  const state: LearningState = {
+    phase: phase.value,
+    sessionId: sessionId.value ?? undefined,
+    article: currentArticle.value ?? undefined,
+    vocabularyItems: vocabularyItems.value,
+    selectedSentenceWordIndex: selectedSentenceWordIndex.value,
+    bestScores: Object.fromEntries(bestScores.value),
+    learningSettings: learningSettings.value
+  }
+  try {
+    await saveLearningState(state)
+  } catch (e) {
+    // 保存失败不影响主流程
+  }
+}
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto space-y-8">
     <!-- Settings Bar (Pass-through style update recommended inside component, but wrapper here helps) -->
-    <div class="paper-card p-4 rounded-lg flex justify-between items-center bg-white sticky top-4 z-40 shadow-sm border border-[#E5E5E0]">
+    <div v-if="phase === 'quiz'" class="paper-card p-4 rounded-lg flex justify-between items-center bg-white sticky top-4 z-40 shadow-sm border border-[#E5E5E0]">
        <div class="font-serif font-bold italic text-ink text-lg">学习设置</div>
        <LearningSettingsBar v-model="learningSettings" class="!bg-transparent !p-0 !shadow-none" />
     </div>
@@ -481,11 +570,15 @@ onMounted(() => {
            </div>
            
            <div class="flex gap-4">
-             <button @click="skipWord" class="flex-1 py-4 border border-[#E5E5E0] bg-white hover:bg-[#F9F9F7] text-ink font-bold uppercase tracking-widest text-sm transition-all text-ink/40 hover:text-ink">
+             <button
+               v-if="isCorrect && !givenUp"
+               @click="skipWord"
+               class="flex-1 py-4 border border-[#E5E5E0] bg-white hover:bg-[#F9F9F7] text-ink font-bold uppercase tracking-widest text-sm transition-all text-ink/40 hover:text-ink"
+             >
                跳过
              </button>
-             <button @click="addWord" class="flex-[2] py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm hover:bg-ink/90 transition-all shadow-lg">
-               {{ (isCorrect && !givenUp) ? '添加到生词本' : '学习此词' }}
+             <button @click="addWord" class="flex-1 py-4 bg-ink text-white font-bold uppercase tracking-widest text-sm hover:bg-ink/90 transition-all shadow-lg">
+               {{ isLastWordForSelection ? '开始生成' : (isCorrect && !givenUp) ? '添加到生词本' : '学习此词' }}
              </button>
            </div>
         </div>
@@ -526,8 +619,16 @@ onMounted(() => {
                    <span class="px-3 py-1 border border-ink/20 text-ink/60 text-[10px] font-bold uppercase tracking-widest rounded-full">{{ learningSettings.theme }}</span>
                    <span class="px-3 py-1 border border-ink/20 text-ink/60 text-[10px] font-bold uppercase tracking-widest rounded-full">阅读</span>
                  </div>
-                 <button @click="speakWord(currentArticle.content.replace(/\*\*/g, ''))" class="text-ink/40 hover:text-ink transition-colors" title="朗读全文">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                 <button 
+                  @click="toggleArticleReading" 
+                  class="flex items-center gap-2 transition-colors uppercase font-bold tracking-widest text-xs" 
+                  :class="isSpeaking ? 'text-[#D4B483]' : 'text-ink/40 hover:text-ink'"
+                  :title="isSpeaking ? '停止朗读' : '朗读全文'"
+                 >
+                    <span v-if="isSpeaking" class="animate-pulse">Playing...</span>
+                    <span v-else class="hidden sm:inline">Play Audio</span>
+                    <svg v-if="!isSpeaking" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
                  </button>
                </div>
                

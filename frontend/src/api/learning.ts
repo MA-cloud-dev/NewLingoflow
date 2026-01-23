@@ -105,6 +105,36 @@ export function submitSentence(sessionId: number, vocabularyId: number, sentence
     return request.post('/learning/sentence', { sessionId, vocabularyId, sentence })
 }
 
+// 获取学习状态（用于页面刷新恢复）
+export function getLearningState(): Promise<ApiResponse<LearningState | null>> {
+    return request.get('/learning/state')
+}
+
+// 保存学习状态
+export function saveLearningState(state: LearningState): Promise<ApiResponse<null>> {
+    return request.post('/learning/state', state)
+}
+
+// 清除学习状态
+export function clearLearningState(): Promise<ApiResponse<null>> {
+    return request.delete('/learning/state')
+}
+
+// 学习状态接口
+export interface LearningState {
+    phase: 'quiz' | 'study' | 'complete'
+    sessionId?: number
+    article?: ArticleData
+    vocabularyItems?: VocabularyItem[]
+    selectedSentenceWordIndex?: number
+    bestScores?: Record<number, number>
+    learningSettings?: {
+        theme: string
+        difficulty: string
+        length: string
+    }
+}
+
 // ========== 复习模块 ==========
 
 export interface ReviewWord {

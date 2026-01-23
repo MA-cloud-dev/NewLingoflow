@@ -8,10 +8,14 @@ import com.lingoflow.mapper.LearningSessionMapper;
 import com.lingoflow.mapper.SessionWordMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 
+import java.time.Duration;
 import java.util.*;
 
 @Service
@@ -22,9 +26,55 @@ public class LearningService {
     private final SessionWordMapper sessionWordMapper;
     private final VocabularyService vocabularyService;
     private final RestTemplate restTemplate;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
+    private final WordService wordService;
 
     @Value("${ai.service.url:http://localhost:5000}")
     private String aiServiceUrl;
+
+    private static final String STUDY_STATE_KEY_PREFIX = "learning:study:";
+    private static final Duration STUDY_STATE_TTL = Duration.ofHours(1);
+
+    /**
+     * 保存学习阶段状态到 Redis
+     */
+    public void saveLearningState(Long userId, Map<String, Object> state) {
+        String key = STUDY_STATE_KEY_PREFIX + userId;
+        try {
+            String json = objectMapper.writeValueAsString(state);
+            redisTemplate.opsForValue().set(key, json, STUDY_STATE_TTL);
+        } catch (Exception e) {
+            // 缓存失败不影响主流程
+        }
+    }
+
+    /**
+     * 从 Redis 获取学习阶段状态
+     */
+    public Map<String, Object> getLearningState(Long userId) {
+        String key = STUDY_STATE_KEY_PREFIX + userId;
+        String cachedValue = redisTemplate.opsForValue().get(key);
+
+        if (cachedValue != null) {
+            try {
+                return objectMapper.readValue(cachedValue, new TypeReference<Map<String, Object>>() {
+                });
+            } catch (Exception e) {
+                redisTemplate.delete(key);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 清除学习阶段状态
+     */
+    public void clearLearningState(Long userId) {
+        String key = STUDY_STATE_KEY_PREFIX + userId;
+        redisTemplate.delete(key);
+        wordService.clearLearningProgress(userId);
+    }
 
     public Map<String, Object> generateArticle(Long userId, List<Long> vocabularyIds,
             String difficulty, String length, String theme) {
@@ -69,6 +119,9 @@ public class LearningService {
 
             Map<String, Object> responseBody = response.getBody();
             if (responseBody != null && (Integer) responseBody.get("code") == 200) {
+                // 清除选词进度
+                wordService.clearLearningProgress(userId);
+
                 // 创建学习会话
                 LearningSession session = new LearningSession();
                 session.setUserId(userId);
